@@ -5,106 +5,186 @@
     <title>Générateur FLE Hachette</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; }
-        .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
-        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; }
+        /* Stili ispirati alla struttura Hachette/icPlayer */
+        .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; font-family: sans-serif; }
+        .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; font-family: sans-serif; }
+        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; transition: all 0.2s; }
         .btn-lvl.active { background-color: #1e3a8a; color: white; }
-        .game-canvas { min-height: 400px; background: white; border: 1px solid #e2e8f0; }
+        .game-canvas { min-height: 400px; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
         .input-label { font-size: 0.75rem; font-weight: bold; color: #1e3a8a; text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; overflow: hidden; width: 120px; text-align: center; background: white; }
+        .domino-top { height: 80px; background: #f8fafc; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #e2e8f0; font-size: 2rem; }
+        .domino-bottom { padding: 5px; font-weight: bold; color: #1e3a8a; font-size: 0.9rem; }
     </style>
 </head>
-<body class="bg-slate-200 p-4">
+<body class="bg-slate-200 p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-        <div class="lg:w-1/3 bg-white p-5 rounded-lg shadow-xl space-y-4">
-            <h2 class="text-xl font-bold text-blue-900 border-b pb-2">Configurazione</h2>
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+        
+        <div class="lg:w-2/5 bg-white p-6 rounded-xl shadow-xl space-y-6 overflow-y-auto max-h-[90vh]">
+            <h2 class="text-2xl font-bold text-blue-900 border-b pb-2 flex items-center gap-2">
+                ⚙️ Configuration
+            </h2>
             
-            <div>
-                <label class="input-label">Unité (Numéro & Titre)</label>
-                <input id="in-unite" type="text" class="w-full p-2 border rounded" placeholder="Ex: Unité 1 : La chambre">
+            <div class="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
+                <label class="input-label text-indigo-700">1. Incolla testo dell'Unità</label>
+                <textarea id="rawText" class="w-full h-32 p-3 text-sm border rounded focus:ring-2 focus:ring-indigo-400 outline-none" placeholder="Incolla qui il testo grezzo da analizzare..."></textarea>
+                <button onclick="analizzaConAI()" id="btn-ai" class="w-full mt-3 bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2">
+                    ✨ CHIEDI ALL'AI DI COMPILARE I CAMPI
+                </button>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs bg-blue-50 p-3 rounded">
-                <div class="col-span-2 font-bold border-b mb-2">Niveau Facile</div>
-                <div class="col-span-2">
-                    <label class="input-label">Consigne</label>
-                    <input id="con-f" type="text" class="w-full p-2 border rounded text-xs">
-                </div>
+            <hr>
+
+            <div class="space-y-4">
                 <div>
-                    <label class="input-label">Typologie</label>
-                    <select id="type-f" class="w-full p-2 border rounded text-xs">
-                        <option value="drag">Drag & Drop</option>
-                        <option value="memory">Memory</option>
-                    </select>
+                    <label class="input-label">Unità (Numero e Titolo)</label>
+                    <input id="in-unite" type="text" class="w-full p-2 border rounded focus:border-blue-500" placeholder="es: Unité 1 : La chambre">
                 </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded">
-                <div class="col-span-2 font-bold border-b mb-2">Niveau Difficile</div>
-                <div class="col-span-2">
-                    <label class="input-label">Consigne</label>
-                    <input id="con-d" type="text" class="w-full p-2 border rounded text-xs">
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
+                    <span class="font-bold text-blue-800 text-sm">NIVEAU FACILE</span>
+                    <div>
+                        <label class="input-label">Consigne</label>
+                        <input id="con-f" type="text" class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="input-label">Tipologia</label>
+                            <select id="type-f" class="w-full p-2 border rounded text-sm bg-white">
+                                <option value="drag">Drag & Drop</option>
+                                <option value="memory">Memory</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                    <span class="font-bold text-slate-700 text-sm">NIVEAU DIFFICILE</span>
+                    <div>
+                        <label class="input-label">Consigne</label>
+                        <input id="con-d" type="text" class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="input-label">Tipologia</label>
+                            <select id="type-d" class="w-full p-2 border rounded text-sm bg-white">
+                                <option value="anagramme">Anagramme</option>
+                                <option value="croises">Mots Croisés</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="input-label">Typologie</label>
-                    <select id="type-d" class="w-full p-2 border rounded text-xs">
-                        <option value="anagramme">Anagramme</option>
-                        <option value="croises">Mots Croisés</option>
-                    </select>
+                    <label class="input-label">Lista Item (separati da ;)</label>
+                    <textarea id="items-list" class="w-full h-24 p-2 border rounded text-sm" placeholder="item1; item2; item3..."></textarea>
                 </div>
             </div>
 
-            <div>
-                <label class="input-label">Liste des Items (Séparés par ;)</label>
-                <textarea id="items-list" class="w-full h-24 p-2 border rounded text-sm" placeholder="lit; armoire; lampe..."></textarea>
-            </div>
-
-            <button onclick="aggiornaAnteprima()" class="w-full bg-blue-700 text-white py-3 rounded font-bold hover:bg-blue-800 transition">AGGIORNA ANTEPRIMA</button>
+            <button onclick="aggiornaAnteprima()" class="w-full bg-blue-700 text-white py-4 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition transform active:scale-95">
+                👁️ AGGIORNA ANTEPRIMA
+            </button>
         </div>
 
-        <div class="lg:w-2/3">
-            <div id="res-container" class="bg-white rounded-lg shadow-2xl overflow-hidden min-h-[600px]">
+        <div class="lg:w-3/5">
+            <div id="preview-card" class="bg-white rounded-xl shadow-2xl overflow-hidden min-h-[700px] flex flex-col">
                 <div id="res-unite" class="h-unite">UNITÉ</div>
                 <div id="res-activite" class="h-activite">ACTIVITÉ</div>
                 
-                <div class="p-6">
-                    <div class="flex gap-3 mb-6">
+                <div class="p-8 flex-grow">
+                    <div class="flex gap-4 mb-8">
                         <button id="b-f" class="btn-lvl active" onclick="setLvl('f')">Niveau Facile</button>
                         <button id="b-d" class="btn-lvl" onclick="setLvl('d')">Niveau Difficile</button>
                     </div>
                     
-                    <p id="res-consigne" class="italic text-slate-600 mb-6 text-lg"></p>
+                    <p id="res-consigne" class="italic text-slate-600 mb-8 text-xl border-l-4 border-blue-200 pl-4"></p>
                     
-                    <div id="game-area" class="game-canvas p-10 flex flex-wrap gap-4 justify-center items-center">
+                    <div id="game-area" class="game-canvas p-6 flex flex-wrap gap-6 justify-center items-start">
                         </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t flex justify-end">
+                    <button class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 transition">
+                        💾 SCARICA HTML FINALE
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        let currentData = null;
         let currentLevel = 'f';
 
+        // 1. Chiamata all'AI per popolare i campi
+        async function analizzaConAI() {
+            const btn = document.getElementById('btn-ai');
+            const raw = document.getElementById('rawText').value;
+            if(!raw) return alert("Per favore, incolla prima il testo dell'unità.");
+
+            btn.innerText = "⏳ Analisi in corso...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/parse_text', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({testo: raw})
+                });
+                const data = await response.json();
+
+                // Popolamento campi
+                document.getElementById('in-unite').value = data.unite || "";
+                document.getElementById('con-f').value = data.consigne_f || "";
+                document.getElementById('con-d').value = data.consigne_d || "";
+                document.getElementById('items-list').value = data.items || "";
+
+                aggiornaAnteprima();
+            } catch (e) {
+                alert("Errore durante l'analisi. Riprova.");
+            } finally {
+                btn.innerText = "✨ CHIEDI ALL'AI DI COMPILARE I CAMPI";
+                btn.disabled = false;
+            }
+        }
+
+        // 2. Aggiorna l'anteprima grafica basandosi sui campi compilati
         function aggiornaAnteprima() {
             document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
             document.getElementById('res-activite').innerText = "Activité"; 
             setLvl(currentLevel);
         }
 
+        // 3. Gestione dello switch tra i livelli nell'anteprima
         function setLvl(l) {
             currentLevel = l;
             document.getElementById('b-f').classList.toggle('active', l === 'f');
             document.getElementById('b-d').classList.toggle('active', l === 'd');
             
-            const items = document.getElementById('items-list').value.split(';').filter(i => i.trim() !== "");
+            const rawItems = document.getElementById('items-list').value;
+            const items = rawItems.split(';').map(i => i.trim()).filter(i => i !== "");
             const area = document.getElementById('game-area');
             
             if(l === 'f') {
                 document.getElementById('res-consigne').innerText = document.getElementById('con-f').value || "Consigne facile";
-                area.innerHTML = items.map(i => `<div class="border-2 border-blue-800 p-4 rounded bg-blue-50 font-bold">${i.trim()}</div>`).join('');
+                area.innerHTML = items.map(i => `
+                    <div class="domino-card shadow-md">
+                        <div class="domino-top">🖼️</div>
+                        <div class="domino-bottom">${i}</div>
+                    </div>
+                `).join('');
             } else {
                 document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Consigne difficile";
-                area.innerHTML = items.map(i => `<div class="p-4 border rounded bg-slate-100 italic">? (Anagramme de ${i.trim()})</div>`).join('');
+                area.innerHTML = items.map(i => `
+                    <div class="p-4 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 w-40 text-center">
+                        <div class="text-3xl mb-2 text-slate-300">🖼️</div>
+                        <div class="font-mono tracking-widest text-blue-600 font-bold">
+                            ${i.split('').sort(() => Math.random() - 0.5).join(' ').toUpperCase()}
+                        </div>
+                        <div class="mt-2 text-xs text-slate-400">?</div>
+                    </div>
+                `).join('');
             }
         }
     </script>
