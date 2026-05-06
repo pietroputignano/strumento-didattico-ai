@@ -1,5 +1,4 @@
 import os
-import json
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
@@ -13,29 +12,30 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 def home():
     return render_template('index.html')
 
-@app.route('/generate', methods=['POST'])
-def generate_exercise():
+@app.route('/parse_text', methods=['POST'])
+def parse_text():
     try:
         testo_utente = request.json.get('testo', '')
-        prompt = f"""
-        Genera un JSON per un esercizio FLE. 
-        Testo: {testo_utente}
-        REGOLE:
-        - unite: Titolo completo Unità (es. Unité 1 : ...)
-        - titre_activite: Nome dell'attività
-        - items: lista dei vocaboli
-        - consigne_f: consegna facile
-        - consigne_d: consegna difficile
-        """
         
+        prompt = f"""
+        Analizza questo testo didattico e compila i campi per un esercizio.
+        TESTO: {testo_utente}
+        
+        RESTITUISCI SOLO JSON:
+        {{
+          "unite": "Numero e titolo unità",
+          "consigne_f": "Consegna per il livello facile",
+          "consigne_d": "Consegna per il livello difficile",
+          "items": "lista parole separate da punto e virgola"
+        }}
+        """
+
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "system", "content": "Rispondi SOLO in JSON."},
+            messages=[{"role": "system", "content": "Sei un assistente che estrae dati didattici in JSON."},
                       {"role": "user", "content": prompt}],
             response_format={ "type": "json_object" }
         )
-        
-        # Pulizia del risultato
         return response.choices[0].message.content
     except Exception as e:
         return jsonify({"error": str(e)}), 500
