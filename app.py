@@ -1,13 +1,14 @@
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from openai import OpenAI # Importiamo il cliente OpenAI
+from openai import OpenAI
 
 app = Flask(__name__)
 CORS(app)
 
-# Recuperiamo la chiave segreta in modo sicuro da Render
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Inizializzazione sicura del client OpenAI
+api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key) if api_key else None
 
 @app.route('/')
 def home():
@@ -15,36 +16,41 @@ def home():
 
 @app.route('/generate', methods=['POST'])
 def generate_exercise():
-    testo_utente = request.json.get('testo')
+    if not client:
+        return jsonify({"error": "Chiave API non configurata su Render"}), 500
     
-    prompt = f"""
-    Sei un esperto sviluppatore di risorse didattiche FLE per Hachette.
-    Analizza questo testo e trasforma tutto in un file JSON preciso.
-    TESTO: {testo_utente}
-
-    STRUTTURA JSON RICHIESTA (NON AGGIUNGERE ALTRO TESTO):
-    {{
-      "unite": "Testo completo della riga 1 (es: Unité 1 : Le domino...)",
-      "titre_activite": "Titolo della riga 2",
-      "items": ["parola1", "parola2", "parola3", "..."],
-      "livello_facile": {{
-          "consigne": "Testo della consegna facile",
-          "tipo": "drag_and_drop"
-      }},
-      "livello_difficile": {{
-          "consigne": "Testo della consegna difficile",
-          "tipo": "anagramma"
-      }}
-    }}
-    """
-
     try:
+        data = request.json
+        testo_utente = data.get('testo', '')
+
+        prompt = f"""
+        Sei un esperto di FLE. Analizza il testo e crea un JSON per un esercizio.
+        Testo: {testo_utente}
+        
+        Rispondi ESCLUSIVAMENTE con un oggetto JSON strutturato così:
+        {{
+          "unite": "Titolo completo riga 1",
+          "titre_activite": "Titolo riga 2",
+          "items": ["parola 1", "parola 2"],
+          "livello_facile": {{"consigne": "istruzione facile"}},
+          "livello_difficile": {{"consigne": "istruzione difficile"}}
+        }}
+        """
+
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "system", "content": "Rispondi solo in formato JSON puro."},
-                      {"role": "user", "content": prompt}],
-            response_format={ "type": "json_object" } # Obbliga l'AI a dare JSON
+            messages=[
+                {"role": "system", "content": "Sei un assistente che genera solo JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={ "type": "json_object" }
         )
+        
         return response.choices[0].message.content
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
