@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI EdTech Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hachette-blue { background-color: #004a99; }
+        .hachette-gray { background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="hachette-blue text-white p-4 shadow-md">
+        <h1 class="text-xl font-bold">Generatore Risorse FLE</h1>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">1. Inserisci Specifiche</h2>
+                <textarea id="userInput" class="w-full h-64 p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Incolla qui il testo (es: Unité 1 : Le domino...)"></textarea>
+                <button onclick="generaAnteprima()" class="mt-4 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                    Genera Anteprima
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">2. Anteprima Risorsa</h2>
+                <div id="previewArea" class="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 text-center">
+                    L'anteprima apparirà qui dopo aver cliccato "Genera"
+                </div>
+                <button id="downloadBtn" disabled class="mt-4 w-full bg-gray-400 text-white py-2 rounded cursor-not-allowed">
+                    Scarica HTML Finale
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function generaAnteprima() {
+            const testo = document.getElementById('userInput').value;
+            if(!testo) return alert("Inserisci del testo!");
+            
+            document.getElementById('previewArea').innerHTML = "<p class='text-blue-600'>L'AI sta elaborando... (Simulazione)</p>";
+            
+            // Qui in futuro faremo la chiamata vera al server
+            setTimeout(() => {
+                document.getElementById('previewArea').innerHTML = `
+                    <div class='w-full text-left'>
+                        <div class='bg-blue-800 text-white p-2 text-xs'>UNITÉ 1: Le domino...</div>
+                        <div class='bg-gray-200 p-2 text-xs font-bold'>Le Domino</div>
+                        <div class='p-4 border'>[Esercizio Interattivo Pronto]</div>
+                    </div>
+                `;
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').classList.replace('bg-gray-400', 'bg-blue-600');
+                document.getElementById('downloadBtn').classList.remove('cursor-not-allowed');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
