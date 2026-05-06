@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Générateur FLE Hachette</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         /* Stili ispirati alla struttura Hachette/icPlayer */
         .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; font-family: sans-serif; }
@@ -158,35 +160,84 @@
 
         // 3. Gestione dello switch tra i livelli nell'anteprima
         function setLvl(l) {
-            currentLevel = l;
-            document.getElementById('b-f').classList.toggle('active', l === 'f');
-            document.getElementById('b-d').classList.toggle('active', l === 'd');
-            
-            const rawItems = document.getElementById('items-list').value;
-            const items = rawItems.split(';').map(i => i.trim()).filter(i => i !== "");
-            const area = document.getElementById('game-area');
-            
-            if(l === 'f') {
-                document.getElementById('res-consigne').innerText = document.getElementById('con-f').value || "Consigne facile";
-                area.innerHTML = items.map(i => `
-                    <div class="domino-card shadow-md">
+    currentLevel = l;
+    document.getElementById('b-f').classList.toggle('active', l === 'f');
+    document.getElementById('b-d').classList.toggle('active', l === 'd');
+    
+    const rawItems = document.getElementById('items-list').value;
+    const items = rawItems.split(';').map(i => i.trim()).filter(i => i !== "");
+    const area = document.getElementById('game-area');
+    
+    if(l === 'f') {
+        document.getElementById('res-consigne').innerText = document.getElementById('con-f').value || "Lis et déplace.";
+        // Mescoliamo gli items per il gioco
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        
+        area.innerHTML = `
+            <div id="sortable-cards" class="flex flex-wrap gap-4 justify-center">
+                ${shuffled.map(i => `
+                    <div class="domino-card shadow-md cursor-move" data-id="${i}">
                         <div class="domino-top">🖼️</div>
                         <div class="domino-bottom">${i}</div>
                     </div>
-                `).join('');
-            } else {
-                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Consigne difficile";
-                area.innerHTML = items.map(i => `
-                    <div class="p-4 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 w-40 text-center">
-                        <div class="text-3xl mb-2 text-slate-300">🖼️</div>
-                        <div class="font-mono tracking-widest text-blue-600 font-bold">
-                            ${i.split('').sort(() => Math.random() - 0.5).join(' ').toUpperCase()}
-                        </div>
-                        <div class="mt-2 text-xs text-slate-400">?</div>
-                    </div>
-                `).join('');
-            }
-        }
+                `).join('')}
+            </div>
+            <button onclick="checkOrder()" class="mt-8 bg-orange-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">VÉRIFIER</button>
+        `;
+
+        // Attiviamo il trascinamento reale
+        new Sortable(document.getElementById('sortable-cards'), {
+            animation: 150,
+            ghostClass: 'opacity-20'
+        });
+
+    } else {
+        document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Remets en ordre.";
+        area.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                ${items.map((i, index) => {
+                    const scrambled = i.split('').sort(() => Math.random() - 0.5).join('');
+                    return `
+                    <div class="p-4 border-2 rounded-lg bg-slate-50 flex items-center gap-4">
+                        <div class="text-2xl">🖼️</div>
+                        <input type="text" id="ans-${index}" data-correct="${i}" 
+                               class="w-full p-2 border-b-2 border-blue-300 outline-none focus:border-blue-600 font-bold uppercase tracking-widest text-center"
+                               placeholder="${scrambled.toUpperCase()}">
+                        <button onclick="checkWord(${index})" class="text-blue-500 font-bold">OK</button>
+                    </div>`;
+                }).join('')}
+            </div>
+            <button onclick="checkAllWords()" class="mt-8 bg-orange-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">VÉRIFIER TOUT</button>
+        `;
+    }
+}
+
+// Funzioni di controllo (Feedback)
+function checkOrder() {
+    const cards = document.querySelectorAll('#sortable-cards .domino-card');
+    const items = document.getElementById('items-list').value.split(';').map(i => i.trim());
+    let correct = true;
+    
+    cards.forEach((card, index) => {
+        if(card.getAttribute('data-id') !== items[index]) correct = false;
+    });
+
+    if(correct) {
+        confetti();
+        alert("Bravo ! C'est correct !");
+    } else {
+        alert("Essaie encore ! L'ordre n'est pas bon.");
+    }
+}
+
+function checkWord(idx) {
+    const input = document.getElementById(`ans-${idx}`);
+    if(input.value.toLowerCase().trim() === input.getAttribute('data-correct').toLowerCase().trim()) {
+        input.classList.add('bg-green-100', 'border-green-500');
+    } else {
+        input.classList.add('bg-red-100', 'border-red-500');
+    }
+}
     </script>
 </body>
 </html>
