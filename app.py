@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Sistema Operativo! Il tuo tool e online."
+    return render_template('index.html')
 
 @app.route('/generate', methods=['POST'])
 def generate():
