@@ -5,115 +5,106 @@
     <title>Générateur FLE Hachette</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .h-1 { background-color: #2b469b; color: white; padding: 12px; font-weight: bold; text-transform: uppercase; font-size: 1.1rem; }
-        .h-2 { background-color: #e2e8f0; color: #475569; padding: 10px; font-weight: bold; border-bottom: 2px solid #cbd5e1; }
-        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #2b469b; color: #2b469b; font-weight: bold; transition: 0.3s; }
-        .btn-lvl.active { background-color: #2b469b; color: white; }
-        .game-box { min-height: 350px; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
-        .domino { border: 2px solid #2b469b; padding: 15px; border-radius: 8px; display: inline-block; margin: 8px; background: #f8fafc; font-weight: 600; }
+        .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; }
+        .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
+        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; }
+        .btn-lvl.active { background-color: #1e3a8a; color: white; }
+        .game-canvas { min-height: 400px; background: white; border: 1px solid #e2e8f0; }
+        .input-label { font-size: 0.75rem; font-weight: bold; color: #1e3a8a; text-transform: uppercase; margin-bottom: 2px; display: block; }
     </style>
 </head>
-<body class="bg-slate-100 p-4 md:p-10">
+<body class="bg-slate-200 p-4">
 
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-8">
-        <div class="md:w-1/3 bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-bold mb-4 text-blue-900">⚙️ Configuration</h2>
-            <textarea id="userInput" class="w-full h-80 p-4 border-2 border-slate-200 rounded-lg mb-4 focus:border-blue-500 outline-none transition" placeholder="Incolla qui le specifiche..."></textarea>
-            <button onclick="genera()" id="btn-main" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-md active:scale-95 transition">GENERA ESERCIZIO</button>
-        </div>
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-1/3 bg-white p-5 rounded-lg shadow-xl space-y-4">
+            <h2 class="text-xl font-bold text-blue-900 border-b pb-2">Configurazione</h2>
+            
+            <div>
+                <label class="input-label">Unité (Numéro & Titre)</label>
+                <input id="in-unite" type="text" class="w-full p-2 border rounded" placeholder="Ex: Unité 1 : La chambre">
+            </div>
 
-        <div class="md:w-2/3">
-            <div id="preview" class="hidden shadow-2xl rounded-xl overflow-hidden bg-white">
-                <div id="out-unite" class="h-1 text-center md:text-left"></div>
-                <div id="out-titre" class="h-2 text-center md:text-left"></div>
-                
-                <div class="p-6">
-                    <div class="flex gap-4 mb-6 justify-center md:justify-start">
-                        <button id="btn-f" class="btn-lvl active" onclick="switchLvl('f')">Niveau Facile</button>
-                        <button id="btn-d" class="btn-lvl" onclick="switchLvl('d')">Niveau Difficile</button>
-                    </div>
-
-                    <p id="out-consigne" class="text-slate-600 italic mb-6 text-lg"></p>
-                    <div id="game-area" class="game-box p-8 flex flex-wrap justify-center items-center">
-                        </div>
+            <div class="grid grid-cols-2 gap-2 text-xs bg-blue-50 p-3 rounded">
+                <div class="col-span-2 font-bold border-b mb-2">Niveau Facile</div>
+                <div class="col-span-2">
+                    <label class="input-label">Consigne</label>
+                    <input id="con-f" type="text" class="w-full p-2 border rounded text-xs">
+                </div>
+                <div>
+                    <label class="input-label">Typologie</label>
+                    <select id="type-f" class="w-full p-2 border rounded text-xs">
+                        <option value="drag">Drag & Drop</option>
+                        <option value="memory">Memory</option>
+                    </select>
                 </div>
             </div>
-            
-            <div id="loading" class="hidden flex flex-col items-center justify-center h-full space-y-4 py-20">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <p class="text-slate-500 font-medium">L'IA sta creando la risorsa...</p>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded">
+                <div class="col-span-2 font-bold border-b mb-2">Niveau Difficile</div>
+                <div class="col-span-2">
+                    <label class="input-label">Consigne</label>
+                    <input id="con-d" type="text" class="w-full p-2 border rounded text-xs">
+                </div>
+                <div>
+                    <label class="input-label">Typologie</label>
+                    <select id="type-d" class="w-full p-2 border rounded text-xs">
+                        <option value="anagramme">Anagramme</option>
+                        <option value="croises">Mots Croisés</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="input-label">Liste des Items (Séparés par ;)</label>
+                <textarea id="items-list" class="w-full h-24 p-2 border rounded text-sm" placeholder="lit; armoire; lampe..."></textarea>
+            </div>
+
+            <button onclick="aggiornaAnteprima()" class="w-full bg-blue-700 text-white py-3 rounded font-bold hover:bg-blue-800 transition">AGGIORNA ANTEPRIMA</button>
+        </div>
+
+        <div class="lg:w-2/3">
+            <div id="res-container" class="bg-white rounded-lg shadow-2xl overflow-hidden min-h-[600px]">
+                <div id="res-unite" class="h-unite">UNITÉ</div>
+                <div id="res-activite" class="h-activite">ACTIVITÉ</div>
+                
+                <div class="p-6">
+                    <div class="flex gap-3 mb-6">
+                        <button id="b-f" class="btn-lvl active" onclick="setLvl('f')">Niveau Facile</button>
+                        <button id="b-d" class="btn-lvl" onclick="setLvl('d')">Niveau Difficile</button>
+                    </div>
+                    
+                    <p id="res-consigne" class="italic text-slate-600 mb-6 text-lg"></p>
+                    
+                    <div id="game-area" class="game-canvas p-10 flex flex-wrap gap-4 justify-center items-center">
+                        </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        let data = null;
+        let currentLevel = 'f';
 
-        async function genera() {
-            const txt = document.getElementById('userInput').value;
-            if(!txt) return alert("Inserisci il testo!");
-            
-            document.getElementById('preview').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-
-            try {
-                const r = await fetch('/generate', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({testo: txt})
-                });
-                const rawData = await r.json();
-                
-                // Normalizzazione dei dati: così non avremo più "undefined"
-                data = {
-                    unite: rawData.unite || rawData.unite_titre || "Unité 1",
-                    titre_activite: rawData.titre_activite || rawData.activite || "Activité",
-                    items: rawData.items || [],
-                    consigne_f: rawData.consigne_f || rawData.consigne_facile || "Lis et déplace.",
-                    consigne_d: rawData.consigne_d || rawData.consigne_difficile || "Remets en ordre."
-                };
-                
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('preview').classList.remove('hidden');
-                
-                document.getElementById('out-unite').innerText = data.unite;
-                document.getElementById('out-titre').innerText = data.titre_activite;
-                switchLvl('f');
-            } catch (e) {
-                console.error(e);
-                alert("Errore. Riprova tra un istante.");
-                document.getElementById('loading').classList.add('hidden');
-            }
+        function aggiornaAnteprima() {
+            document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
+            document.getElementById('res-activite').innerText = "Activité"; 
+            setLvl(currentLevel);
         }
 
-        function switchLvl(l) {
+        function setLvl(l) {
+            currentLevel = l;
+            document.getElementById('b-f').classList.toggle('active', l === 'f');
+            document.getElementById('b-d').classList.toggle('active', l === 'd');
+            
+            const items = document.getElementById('items-list').value.split(';').filter(i => i.trim() !== "");
             const area = document.getElementById('game-area');
-            document.getElementById('btn-f').classList.toggle('active', l === 'f');
-            document.getElementById('btn-d').classList.toggle('active', l === 'd');
-
+            
             if(l === 'f') {
-                document.getElementById('out-consigne').innerText = data.consigne_f;
-                area.innerHTML = data.items.map(i => `
-                    <div class="domino group">
-                        <div class="text-xs text-blue-300 mb-1 border-b border-blue-100">Visuel</div>
-                        <div class="py-2">🖼️</div>
-                        <div class="bg-blue-100 text-blue-900 p-1 rounded mt-1">${i}</div>
-                    </div>
-                `).join('');
+                document.getElementById('res-consigne').innerText = document.getElementById('con-f').value || "Consigne facile";
+                area.innerHTML = items.map(i => `<div class="border-2 border-blue-800 p-4 rounded bg-blue-50 font-bold">${i.trim()}</div>`).join('');
             } else {
-                document.getElementById('out-consigne').innerText = data.consigne_d;
-                area.innerHTML = `
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-                        ${data.items.map(i => `
-                            <div class="border-2 border-dashed p-4 rounded-lg bg-slate-50 relative">
-                                <div class="text-2xl mb-2">🖼️</div>
-                                <div class="flex gap-1 justify-center">
-                                    ${i.split('').sort(() => Math.random() - 0.5).map(l => `<span class="bg-white border shadow-sm px-2 rounded">${l}</span>`).join('')}
-                                </div>
-                                <span class="absolute top-1 right-2 text-blue-500 font-bold">?</span>
-                            </div>
-                        `).join('')}
-                    </div>`;
+                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Consigne difficile";
+                area.innerHTML = items.map(i => `<div class="p-4 border rounded bg-slate-100 italic">? (Anagramme de ${i.trim()})</div>`).join('');
             }
         }
     </script>
