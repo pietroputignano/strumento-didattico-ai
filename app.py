@@ -17,31 +17,34 @@ def home():
 def generate_exercise():
     testo_utente = request.json.get('testo')
     
-    # Questo è il "Prompt": l'istruzione che diamo all'AI
     prompt = f"""
-    Trasforma il seguente testo in un esercizio interattivo per bambini (scuola primaria).
-    Restituisci SOLO un file JSON con questa struttura:
+    Sei un esperto sviluppatore di risorse didattiche FLE per Hachette.
+    Analizza questo testo e trasforma tutto in un file JSON preciso.
+    TESTO: {testo_utente}
+
+    STRUTTURA JSON RICHIESTA (NON AGGIUNGERE ALTRO TESTO):
     {{
-      "unite": "numero unita",
-      "titre_unite": "titolo",
-      "titre_activite": "titolo attivita",
-      "items": ["lista degli elementi"],
-      "consigne_facile": "istruzione",
-      "consigne_difficile": "istruzione"
+      "unite": "Testo completo della riga 1 (es: Unité 1 : Le domino...)",
+      "titre_activite": "Titolo della riga 2",
+      "items": ["parola1", "parola2", "parola3", "..."],
+      "livello_facile": {{
+          "consigne": "Testo della consegna facile",
+          "tipo": "drag_and_drop"
+      }},
+      "livello_difficile": {{
+          "consigne": "Testo della consegna difficile",
+          "tipo": "anagramma"
+      }}
     }}
-    Testo: {testo_utente}
     """
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o", # Il modello più avanzato
-            messages=[{"role": "user", "content": prompt}]
+            model="gpt-4o",
+            messages=[{"role": "system", "content": "Rispondi solo in formato JSON puro."},
+                      {"role": "user", "content": prompt}],
+            response_format={ "type": "json_object" } # Obbliga l'AI a dare JSON
         )
-        # Qui l'AI ci risponde e noi mandiamo il risultato al tuo schermo
         return response.choices[0].message.content
     except Exception as e:
-        return jsonify({{"error": str(e)}}), 500
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+        return jsonify({"error": str(e)}), 500
