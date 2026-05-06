@@ -62,16 +62,26 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({testo: txt})
                 });
-                data = await r.json();
+                const rawData = await r.json();
+                
+                // Normalizzazione dei dati: così non avremo più "undefined"
+                data = {
+                    unite: rawData.unite || rawData.unite_titre || "Unité 1",
+                    titre_activite: rawData.titre_activite || rawData.activite || "Activité",
+                    items: rawData.items || [],
+                    consigne_f: rawData.consigne_f || rawData.consigne_facile || "Lis et déplace.",
+                    consigne_d: rawData.consigne_d || rawData.consigne_difficile || "Remets en ordre."
+                };
                 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('preview').classList.remove('hidden');
                 
-                document.getElementById('out-unite').innerText = data.unite || "Unité";
-                document.getElementById('out-titre').innerText = data.titre_activite || "Activité";
+                document.getElementById('out-unite').innerText = data.unite;
+                document.getElementById('out-titre').innerText = data.titre_activite;
                 switchLvl('f');
             } catch (e) {
-                alert("Errore nella generazione. Riprova.");
+                console.error(e);
+                alert("Errore. Riprova tra un istante.");
                 document.getElementById('loading').classList.add('hidden');
             }
         }
@@ -83,12 +93,27 @@
 
             if(l === 'f') {
                 document.getElementById('out-consigne').innerText = data.consigne_f;
-                area.innerHTML = data.items.map(i => `<div class="domino">🖼️ | ${i}</div>`).join('');
+                area.innerHTML = data.items.map(i => `
+                    <div class="domino group">
+                        <div class="text-xs text-blue-300 mb-1 border-b border-blue-100">Visuel</div>
+                        <div class="py-2">🖼️</div>
+                        <div class="bg-blue-100 text-blue-900 p-1 rounded mt-1">${i}</div>
+                    </div>
+                `).join('');
             } else {
                 document.getElementById('out-consigne').innerText = data.consigne_d;
-                area.innerHTML = `<div class="grid grid-cols-2 gap-4">
-                    ${data.items.slice(0,4).map(i => `<div class="border p-4 bg-slate-50 rounded"><strong>${i.toUpperCase()}</strong><br><span class="text-blue-500 text-2xl">?</span></div>`).join('')}
-                </div>`;
+                area.innerHTML = `
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                        ${data.items.map(i => `
+                            <div class="border-2 border-dashed p-4 rounded-lg bg-slate-50 relative">
+                                <div class="text-2xl mb-2">🖼️</div>
+                                <div class="flex gap-1 justify-center">
+                                    ${i.split('').sort(() => Math.random() - 0.5).map(l => `<span class="bg-white border shadow-sm px-2 rounded">${l}</span>`).join('')}
+                                </div>
+                                <span class="absolute top-1 right-2 text-blue-500 font-bold">?</span>
+                            </div>
+                        `).join('')}
+                    </div>`;
             }
         }
     </script>
