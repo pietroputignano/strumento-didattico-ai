@@ -2,86 +2,92 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Générateur FLE</title>
+    <title>Générateur FLE Hachette</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .hachette-header-1 { background-color: #1e40af; color: white; padding: 10px; font-weight: bold; text-transform: uppercase; }
-        .hachette-header-2 { background-color: #e5e7eb; color: #374151; padding: 8px; font-weight: bold; border-bottom: 2px solid #d1d5db; }
-        .btn-level { padding: 5px 15px; border-radius: 20px; border: 2px solid #1e40af; color: #1e40af; font-weight: bold; cursor: pointer; }
-        .btn-level.active { background-color: #1e40af; color: white; }
-        .game-canvas { min-height: 300px; background: white; border: 1px solid #ddd; position: relative; overflow: hidden; }
-        .domino-item { border: 2px solid #333; padding: 10px; display: inline-block; margin: 5px; background: #fff; cursor: grab; }
+        .h-1 { background-color: #2b469b; color: white; padding: 12px; font-weight: bold; text-transform: uppercase; font-size: 1.1rem; }
+        .h-2 { background-color: #e2e8f0; color: #475569; padding: 10px; font-weight: bold; border-bottom: 2px solid #cbd5e1; }
+        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #2b469b; color: #2b469b; font-weight: bold; transition: 0.3s; }
+        .btn-lvl.active { background-color: #2b469b; color: white; }
+        .game-box { min-height: 350px; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+        .domino { border: 2px solid #2b469b; padding: 15px; border-radius: 8px; display: inline-block; margin: 8px; background: #f8fafc; font-weight: 600; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-100 p-4 md:p-10">
 
-    <div class="flex h-screen">
-        <div class="w-1/3 p-6 bg-white border-r shadow-lg overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4 text-blue-800">⚙️ Configurazione</h2>
-            <textarea id="userInput" class="w-full h-80 p-4 border rounded-lg mb-4 text-sm" placeholder="Incolla qui le specifiche dell'unità..."></textarea>
-            <button onclick="genera()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">GENERA ESERCIZIO</button>
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-8">
+        <div class="md:w-1/3 bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold mb-4 text-blue-900">⚙️ Configuration</h2>
+            <textarea id="userInput" class="w-full h-80 p-4 border-2 border-slate-200 rounded-lg mb-4 focus:border-blue-500 outline-none transition" placeholder="Incolla qui le specifiche..."></textarea>
+            <button onclick="genera()" id="btn-main" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-md active:scale-95 transition">GENERA ESERCIZIO</button>
         </div>
 
-        <div class="w-2/3 p-6">
-            <div id="preview-container" class="bg-white shadow-2xl rounded-lg overflow-hidden hidden">
-                <div id="out-unite" class="hachette-header-1"></div>
-                <div id="out-titre" class="hachette-header-2"></div>
+        <div class="md:w-2/3">
+            <div id="preview" class="hidden shadow-2xl rounded-xl overflow-hidden bg-white">
+                <div id="out-unite" class="h-1 text-center md:text-left"></div>
+                <div id="out-titre" class="h-2 text-center md:text-left"></div>
                 
-                <div class="p-4 flex gap-4 border-b">
-                    <button id="btn-f" class="btn-level active" onclick="switchLevel('facile')">Niveau Facile</button>
-                    <button id="btn-d" class="btn-level" onclick="switchLevel('difficile')">Niveau Difficile</button>
-                </div>
-
                 <div class="p-6">
-                    <p id="out-consigne" class="italic mb-4 text-gray-700"></p>
-                    <div id="game-area" class="game-canvas p-4">
+                    <div class="flex gap-4 mb-6 justify-center md:justify-start">
+                        <button id="btn-f" class="btn-lvl active" onclick="switchLvl('f')">Niveau Facile</button>
+                        <button id="btn-d" class="btn-lvl" onclick="switchLvl('d')">Niveau Difficile</button>
+                    </div>
+
+                    <p id="out-consigne" class="text-slate-600 italic mb-6 text-lg"></p>
+                    <div id="game-area" class="game-box p-8 flex flex-wrap justify-center items-center">
                         </div>
                 </div>
             </div>
             
-            <div id="placeholder" class="h-full flex items-center justify-center text-gray-400 border-4 border-dashed rounded-xl">
-                L'anteprima si caricherà qui...
+            <div id="loading" class="hidden flex flex-col items-center justify-center h-full space-y-4 py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p class="text-slate-500 font-medium">L'IA sta creando la risorsa...</p>
             </div>
         </div>
     </div>
 
     <script>
-        let currentData = null;
+        let data = null;
 
         async function genera() {
-            const testo = document.getElementById('userInput').value;
-            const resp = await fetch('/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({testo: testo})
-            });
-            currentData = await resp.json();
-            mostraEsercizio();
-        }
-
-        function mostraEsercizio() {
-            document.getElementById('placeholder').classList.add('hidden');
-            document.getElementById('preview-container').classList.remove('hidden');
-            document.getElementById('out-unite').innerText = currentData.unite;
-            document.getElementById('out-titre').innerText = currentData.titre_activite;
-            switchLevel('facile');
-        }
-
-        function switchLevel(lvl) {
-            const btnF = document.getElementById('btn-f');
-            const btnD = document.getElementById('btn-d');
-            const area = document.getElementById('game-area');
+            const txt = document.getElementById('userInput').value;
+            if(!txt) return alert("Inserisci il testo!");
             
-            if(lvl === 'facile') {
-                btnF.classList.add('active'); btnD.classList.remove('active');
-                document.getElementById('out-consigne').innerText = currentData.livello_facile.consigne;
-                area.innerHTML = currentData.items.map(i => `<div class="domino-item">🖼️ | ${i}</div>`).join('');
+            document.getElementById('preview').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                const r = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({testo: txt})
+                });
+                data = await r.json();
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('preview').classList.remove('hidden');
+                
+                document.getElementById('out-unite').innerText = data.unite || "Unité";
+                document.getElementById('out-titre').innerText = data.titre_activite || "Activité";
+                switchLvl('f');
+            } catch (e) {
+                alert("Errore nella generazione. Riprova.");
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function switchLvl(l) {
+            const area = document.getElementById('game-area');
+            document.getElementById('btn-f').classList.toggle('active', l === 'f');
+            document.getElementById('btn-d').classList.toggle('active', l === 'd');
+
+            if(l === 'f') {
+                document.getElementById('out-consigne').innerText = data.consigne_f;
+                area.innerHTML = data.items.map(i => `<div class="domino">🖼️ | ${i}</div>`).join('');
             } else {
-                btnD.classList.add('active'); btnF.classList.remove('active');
-                document.getElementById('out-consigne').innerText = currentData.livello_difficile.consigne;
-                area.innerHTML = `<div class="text-center p-10 border-2 border-orange-200 bg-orange-50">
-                    <p class="mb-4">Clicca sul punto di domanda per riordinare le lettere:</p>
-                    <div class="text-3xl font-bold">?</div>
+                document.getElementById('out-consigne').innerText = data.consigne_d;
+                area.innerHTML = `<div class="grid grid-cols-2 gap-4">
+                    ${data.items.slice(0,4).map(i => `<div class="border p-4 bg-slate-50 rounded"><strong>${i.toUpperCase()}</strong><br><span class="text-blue-500 text-2xl">?</span></div>`).join('')}
                 </div>`;
             }
         }
