@@ -148,14 +148,64 @@
         }
 
         function downloadResource() {
-            const content = document.getElementById('capture-area').innerHTML;
-            const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script><style>.h-unite{background:#1e3a8a;color:white;padding:12px;font-weight:bold;text-transform:uppercase}.h-activite{background:#f1f5f9;color:#475569;padding:10px;font-weight:bold;border-bottom:2px solid #e2e8f0}.domino-card{border:2px solid #1e3a8a;border-radius:8px;width:130px;background:white;display:inline-block;margin:5px}<\/style><\/head><body>${content}<\/body><\/html>`;
-            const blob = new Blob([fullHtml], {type: 'text/html'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'exercice_fle.html';
-            a.click();
+    const unite = document.getElementById('in-unite').value || "UNITÉ";
+    const activite = "Le Domino";
+    const consigne = currentLevel === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
+    const gameContent = document.getElementById('game-area').innerHTML;
+
+    const fullHtml = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${unite}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"><\/script>
+    <style>
+        body { background-color: #f1f5f9; font-family: sans-serif; }
+        .h-unite { background: #1e3a8a; color: white; padding: 15px; font-weight: bold; text-transform: uppercase; text-align: center; }
+        .h-activite { background: #e2e8f0; color: #475569; padding: 10px; font-weight: bold; border-bottom: 2px solid #cbd5e1; text-align: center; }
+        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; width: 130px; background: white; display: inline-block; margin: 10px; cursor: move; transition: transform 0.2s; }
+        .domino-card:active { transform: scale(1.05); }
+        .img-box { height: 90px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-check { background: #10b981; color: white; padding: 10px 25px; border-radius: 999px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="h-unite">${unite}</div>
+    <div class="h-activite">${activite}</div>
+    <div class="max-w-4xl mx-auto p-6 text-center">
+        <p class="italic text-slate-600 mb-8 text-xl">${consigne}</p>
+        <div id="game-container" class="flex flex-wrap justify-center gap-4">
+            ${gameContent}
+        </div>
+        <button onclick="verifie()" class="btn-check">VÉRIFIER</button>
+    </div>
+
+    <script>
+        // Riattiva il Drag & Drop nel file scaricato
+        const el = document.getElementById('game-container');
+        if (el.querySelector('.domino-card')) {
+            new Sortable(el, { animation: 150 });
         }
+
+        function verifie() {
+            confetti();
+            alert("Bravo ! Tu as terminé l'exercice.");
+        }
+    <\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([fullHtml], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${unite.replace(/\s+/g, '_')}.html`;
+    a.click();
+}
     </script>
 </body>
 </html>
