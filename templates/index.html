@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loustics Game Studio Pro</title>
+    <title>Loustics Studio - Full Factory</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -14,106 +14,90 @@
             --hfle-success: #8dc549; --hfle-error: #d84157;
         }
         body { font-family: 'Source Sans Pro', sans-serif; background-color: #f1f5f9; }
-        
-        /* Hachette Title Shadow Effect */
         .h-titre {
             font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--hfle-blue);
             text-shadow: rgb(255, 255, 255) 4px 0px 0px, rgb(255, 255, 255) 3.9px 0.5px 0px, rgb(255, 255, 255) 3.8px 1px 0px;
         }
-        
         .h-unite-bar { background-color: var(--hfle-blue); color: white; padding: 12px; text-transform: uppercase; font-weight: 700; text-align: center; }
-        
-        /* Game States */
-        .cache-debut { background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .timer-box { background: #DAF8FF; border-radius: 99rem; padding: 4px 15px; color: #3998C8; font-weight: bold; border: 2px solid #3998C8; }
-        
-        /* Step Navigation */
         .step-pill { 
-            width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; 
-            display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; transition: 0.2s;
+            width: 32px; height: 32px; border-radius: 10px; background: #7CB5DD; color: white; 
+            display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;
         }
-        .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
+        .step-pill.active { background-color: var(--hfle-blue); }
         .step-pill.completed { background-color: var(--hfle-success); }
-        .step-pill.error { background-color: var(--hfle-error); }
-
-        /* Dressing Game Specifics */
-        .drop-zone-dressing { position: absolute; border: 2px dashed rgba(1, 105, 179, 0.3); border-radius: 10px; transition: 0.3s; }
-        .drop-zone-dressing.active { background: rgba(141, 197, 73, 0.2); border-color: var(--hfle-success); }
-
-        /* UI Elements */
-        .btn-commencer { background-color: var(--hfle-orange); color: white; padding: 12px 40px; border-radius: 99rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn-commencer:hover { background-color: #C66A26; }
+        .btn-commencer { background-color: var(--hfle-orange); color: white; padding: 12px 40px; border-radius: 99rem; font-weight: 700; }
+        /* Stile Cruciverba */
+        .cw-cell { width: 40px; height: 40px; border: 1px solid var(--hfle-blue); text-align: center; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
-<body class="p-2 md:p-4">
+<body class="p-4">
 
-    <div class="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-4">
-        <div class="lg:w-1/4 bg-white p-4 rounded-xl shadow-lg border-t-4 border-blue-600 overflow-y-auto max-h-[95vh] text-xs">
-            <h2 class="text-lg font-bold text-blue-900 mb-4 uppercase italic">Configurazione Game</h2>
+    <div class="max-w-[1500px] mx-auto flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-1/3 bg-white p-5 rounded-xl shadow-lg border-t-8 border-blue-800 overflow-y-auto max-h-[95vh] text-xs">
+            <h2 class="text-xl font-bold text-blue-900 mb-4 uppercase italic border-b pb-2">Paramètres du Jeu</h2>
             
             <div class="space-y-4">
-                <div><p class="font-bold mb-1">Unità & Titolo</p>
-                    <input id="in-unite" type="text" class="w-full p-2 border rounded mb-1" placeholder="UNITÉ 4">
-                    <input id="in-titre" type="text" class="w-full p-2 border rounded" placeholder="Charlotte se déguise">
+                <div><p class="font-bold uppercase mb-1">Unité et Titre</p>
+                    <input id="in-unite" type="text" class="w-full p-2 border rounded mb-1" placeholder="UNITÉ 1">
+                    <input id="in-titre" type="text" class="w-full p-2 border rounded" placeholder="Titre de l'activité">
                 </div>
 
-                <div class="p-3 bg-slate-50 rounded border">
-                    <p class="font-bold text-blue-700 uppercase mb-2">Impostazioni Livelli</p>
-                    <select id="type-game" class="w-full p-2 border rounded bg-white mb-2 font-semibold">
-                        <option value="dressing">Dressing Game (Associazione su Sfondo)</option>
-                        <option value="domino">Domino Chain (Testo -> Immagine)</option>
-                        <option value="anagramme">Anagramme (Letter Ordering)</option>
+                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="font-bold text-blue-800 uppercase mb-2">Niveau Facile</p>
+                    <p class="font-bold text-[10px] mb-1">Consigne Facile</p>
+                    <input id="con-f" type="text" class="w-full p-2 border rounded mb-2" value="Écoute e choisis la bonne image.">
+                    <p class="font-bold text-[10px] mb-1">Tipologia</p>
+                    <select id="type-f" class="w-full p-2 border rounded mb-2">
+                        <option value="dressing">Dressing Game (Sfondo)</option>
+                        <option value="rebus">Texte Rébus (Texte à trous)</option>
+                        <option value="domino">Domino Chain</option>
                     </select>
-                    <div class="flex gap-2 mb-2">
-                        <button onclick="pickAud('con-f')" class="flex-1 p-1 bg-white border rounded">🎵 Audio Facile</button>
-                        <button onclick="pickAud('con-d')" class="flex-1 p-1 bg-white border rounded">🎵 Audio Diff.</button>
-                    </div>
-                    <p class="font-bold">Timer (sec)</p>
-                    <input id="timer-val" type="number" class="w-full p-2 border rounded" value="20">
+                    <button onclick="pickAud('con-f')" class="bg-white border p-1 rounded w-full shadow-sm">🎵 Carica Audio Consegna</button>
+                </div>
+
+                <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p class="font-bold text-orange-800 uppercase mb-2">Niveau Difficile</p>
+                    <p class="font-bold text-[10px] mb-1">Consigne Difficile</p>
+                    <input id="con-d" type="text" class="w-full p-2 border rounded mb-2" value="Remets les lettres en ordre.">
+                    <p class="font-bold text-[10px] mb-1">Tipologia</p>
+                    <select id="type-d" class="w-full p-2 border rounded mb-2">
+                        <option value="anagramme">Anagramme (Ordering)</option>
+                        <option value="crossword">Mots Croisés (Cruciverba)</option>
+                        <option value="loto">Loto des Directions</option>
+                    </select>
+                    <button onclick="pickAud('con-d')" class="bg-white border p-1 rounded w-full shadow-sm">🎵 Carica Audio Consegna</button>
                 </div>
 
                 <div>
-                    <p class="font-bold mb-1">Voci (separate da ;)</p>
-                    <textarea id="items-list" class="w-full h-32 p-2 border rounded" placeholder="le chapeau; les lunettes; le sac"></textarea>
+                    <p class="font-bold uppercase mb-1">Mots / Phrases (separati da ;)</p>
+                    <textarea id="items-list" class="w-full h-24 p-2 border rounded" placeholder="avion; bateau; train"></textarea>
                 </div>
             </div>
 
-            <button onclick="initGenerator()" class="w-full mt-4 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">🚀 GENERA ATTIVITÀ</button>
+            <button onclick="initGame()" class="w-full mt-4 bg-blue-700 text-white py-3 rounded-lg font-bold shadow-lg">GÉNÉRER L'APERÇU</button>
         </div>
 
-        <div id="game-container" class="lg:w-3/4 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[660px] relative">
-            
-            <div id="intro-screen" class="absolute inset-0 cache-debut">
-                <p class="text-xl font-bold text-blue-800 mb-2 uppercase">Exemple</p>
-                <div id="example-box" class="w-64 h-48 border-2 border-dashed border-blue-200 rounded-xl mb-6 flex items-center justify-center bg-slate-50">
-                    <span class="text-gray-400">Preview Esempio</span>
-                </div>
-                <button onclick="startGame()" class="btn-commencer">COMMENCER</button>
-            </div>
-
-            <div id="res-unite" class="h-unite-bar">UNITÉ</div>
+        <div id="game-stage" class="lg:w-2/3 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
+            <div id="res-unite" class="h-unite-bar">UNITÉ 1</div>
             <div class="px-6 py-4 flex justify-between items-center border-b">
-                <h1 id="res-titre" class="h-titre text-2xl md:text-3xl">TITRE</h1>
-                <div id="timer-display" class="timer-box hidden">00:20</div>
-                <div class="flex gap-1">
-                    <button id="btn-f" onclick="setLvl('f')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white">FACILE</button>
-                    <button id="btn-d" onclick="setLvl('d')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800">DIFFICILE</button>
+                <h1 id="res-titre" class="h-titre text-2xl md:text-3xl uppercase">TITRE</h1>
+                <div class="flex gap-2">
+                    <button id="btn-f" onclick="switchLevel('f')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white shadow-md">FACILE</button>
+                    <button id="btn-d" onclick="switchLevel('d')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800 shadow-md">DIFFICILE</button>
                 </div>
             </div>
 
-            <div class="flex-grow flex flex-col items-center p-4 md:p-8 relative">
-                <div class="flex items-center gap-3 mb-6">
-                    <p id="res-consigne" class="italic text-gray-700 font-semibold text-lg"></p>
-                    <button onclick="playConsigne()" class="text-blue-600 text-2xl transition hover:scale-125">🔊</button>
+            <div class="p-8 flex-grow flex flex-col items-center">
+                <div class="flex items-center gap-3 mb-8 bg-slate-50 px-6 py-2 rounded-full border border-slate-200">
+                    <p id="res-consigne" class="italic text-gray-700 font-semibold"></p>
+                    <button onclick="playConsigne()" class="text-blue-600 text-2xl hover:scale-110 transition">🔊</button>
                 </div>
 
-                <div id="stage" class="w-full h-full flex flex-col items-center justify-center relative">
-                    </div>
-
-                <div id="asset-pool" class="w-full mt-auto p-4 border-t border-dashed flex flex-wrap justify-center gap-4"></div>
+                <div id="main-content" class="w-full flex flex-col items-center gap-6"></div>
+                <div id="pool" class="mt-auto p-6 w-full flex flex-wrap justify-center gap-4 border-t border-dashed"></div>
             </div>
 
-            <div id="nav-bar" class="p-4 bg-slate-50 border-t flex justify-center gap-2"></div>
+            <div id="nav-step" class="p-4 bg-slate-50 border-t flex justify-center gap-2"></div>
         </div>
     </div>
 
@@ -122,86 +106,66 @@
 
     <script>
         let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'f', status = [];
-        let timer, timeLeft = 0, activeK = "";
+        let activeKey = "";
 
-        function initGenerator() {
+        function initGame() {
             items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i);
-            document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ 1";
+            document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
             document.getElementById('res-titre').innerText = document.getElementById('in-titre').value || "ACTIVITÉ";
             status = new Array(items.length).fill('pending');
-            document.getElementById('intro-screen').classList.remove('hidden');
-            renderNav();
             loadStep(0);
-        }
-
-        function startGame() {
-            document.getElementById('intro-screen').classList.add('hidden');
-            document.getElementById('timer-display').classList.remove('hidden');
-            startTimer();
         }
 
         function loadStep(idx) {
             curStep = idx;
             renderNav();
-            const stage = document.getElementById('stage');
-            const pool = document.getElementById('asset-pool');
+            const stage = document.getElementById('main-content');
+            const pool = document.getElementById('pool');
             const word = items[idx];
-            const type = document.getElementById('type-game').value;
+            const type = curLvl === 'f' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
+            const consigne = curLvl === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
+            
+            document.getElementById('res-consigne').innerText = consigne;
 
-            if(type === 'dressing') {
-                document.getElementById('res-consigne').innerText = "Écoute et déguise le personaggio.";
-                stage.innerHTML = `
-                    <div class="relative w-full max-w-md h-[400px] bg-slate-100 rounded-2xl border-4 border-white shadow-inner flex items-center justify-center overflow-hidden" onclick="pickImg('bg_game')">
-                        ${dbImg['bg_game'] ? `<img src="${dbImg['bg_game']}" class="max-h-full">` : '📷 CARICA SFONDO (Charlotte/Lupin)'}
-                        <div id="target" class="drop-zone-dressing" style="width:100px; height:100px; top:20%; left:35%;"></div>
-                    </div>
-                `;
-                pool.innerHTML = items.map(it => `
-                    <div class="w-24 h-24 bg-white border-2 border-blue-400 rounded-lg shadow-md cursor-grab flex items-center justify-center p-1" data-word="${it}" onclick="pickImg('${it}')">
-                        ${dbImg[it] ? `<img src="${dbImg[it]}" class="max-h-full">` : `<span class="text-[8px] text-center">Foto<br>${it}</span>`}
-                    </div>`).join('');
-                
-                new Sortable(pool, { group: { name:'dg', pull:'clone', put:false }, sort:false });
-                new Sortable(document.getElementById('target'), { group: 'dg', onAdd: (e) => {
-                    if(e.item.getAttribute('data-word') === word) { validate(true); }
-                    else { validate(false); e.item.remove(); }
-                }});
-            }
-        }
-
-        function validate(correct) {
-            if(correct) {
-                confetti();
-                status[curStep] = 'completed';
-                new Audio(dbAud['award'] || 'https://www.soundjay.com/buttons/sounds/button-3.mp3').play();
-                setTimeout(() => { if(curStep < items.length-1) loadStep(curStep+1); else alert("FINI !"); }, 1500);
+            if(type === 'crossword') {
+                stage.innerHTML = `<div class="grid grid-flow-col gap-1 p-4 bg-slate-100 rounded-lg">
+                    ${word.split('').map(l => `<input class="cw-cell bg-white" maxlength="1">`).join('')}
+                </div><p class="text-xs text-gray-400 mt-4">(Simulation Cruciverba basata su: ${word})</p>`;
+            } else if(type === 'rebus') {
+                stage.innerHTML = `<div class="text-xl leading-loose text-center">
+                    C'est \gap{...} \gap{...} . <br>
+                    <span class="text-sm text-gray-400">(Trascina qui sopra le immagini corrette per: ${word})</span>
+                </div>`;
             } else {
-                status[curStep] = 'error';
-                new Audio(dbAud['wrong'] || 'https://www.soundjay.com/buttons/sounds/button-10.mp3').play();
+                stage.innerHTML = `<div class="w-48 h-48 border-4 border-blue-900 rounded-2xl flex items-center justify-center bg-white shadow-xl cursor-pointer" onclick="pickImg('${word}')">
+                    ${dbImg[word] ? `<img src="${dbImg[word]}" class="max-h-full">` : `📷 Foto ${word}`}
+                </div>`;
             }
-            renderNav();
-        }
-
-        function startTimer() {
-            timeLeft = parseInt(document.getElementById('timer-val').value);
-            timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer-display').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-                if(timeLeft === 4) { /* Play urgency sound */ }
-                if(timeLeft <= 0) { clearInterval(timer); alert("TEMPS ÉCOULÉ !"); }
-            }, 1000);
+            
+            pool.innerHTML = items.map(it => `<div class="p-2 border rounded bg-white shadow cursor-grab" onclick="pickImg('${it}')">${it}</div>`).join('');
         }
 
         function renderNav() {
-            const nav = document.getElementById('nav-bar');
+            const nav = document.getElementById('nav-step');
             nav.innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${status[i]}" onclick="loadStep(${i})">${i+1}</div>`).join('');
         }
 
-        function pickImg(k) { activeK = k; document.getElementById('imgInp').click(); }
-        function pickAud(k) { activeK = k; document.getElementById('audInp').click(); }
-        function handleImg(e) { const r = new FileReader(); r.onload=(ev)=>{dbImg[activeK]=ev.target.result; loadStep(curStep);}; r.readAsDataURL(e.target.files[0]); }
-        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeK]=ev.target.result; alert("Audio MP3 salvato!");}; r.readAsDataURL(e.target.files[0]); }
-        function setLvl(l) { curLvl = l; initGenerator(); }
+        function switchLevel(l) { 
+            curLvl = l; 
+            document.getElementById('btn-f').className = l==='f' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
+            document.getElementById('btn-d').className = l==='d' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
+            initGame();
+        }
+
+        function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
+        function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
+        function handleImg(e) { const r = new FileReader(); r.onload=(ev)=>{dbImg[activeKey]=ev.target.result; loadStep(curStep);}; r.readAsDataURL(e.target.files[0]); }
+        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio MP3 salvato!");}; r.readAsDataURL(e.target.files[0]); }
+        function playConsigne() { 
+            const key = curLvl === 'f' ? 'con-f' : 'con-d';
+            if(dbAud[key]) new Audio(dbAud[key]).play();
+            else { const m=new SpeechSynthesisUtterance(document.getElementById(key).value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
+        }
     </script>
 </body>
 </html>
