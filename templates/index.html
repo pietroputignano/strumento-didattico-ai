@@ -202,14 +202,56 @@
             }
         }
         function downloadGame() {
-            const content = document.getElementById('capture-area').innerHTML;
-            const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script><style>.h-unite{background:#1e3a8a;color:white;padding:12px;font-weight:bold;text-transform:uppercase}.h-activite{background:#f1f5f9;color:#475569;padding:10px;font-weight:bold;border-bottom:2px solid #e2e8f0}.domino-card{border:2px solid #1e3a8a;border-radius:8px;width:130px;background:white;display:inline-block;margin:5px}<\/style><\/head><body>${content}<\/body><\/html>`;
-            const blob = new Blob([fullHtml], {type: 'text/html'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'exercice_fle.html';
-            a.click();
-        }
+    // 1. Prepariamo i dati da salvare
+    const configData = {
+        unite: document.getElementById('in-unite').value,
+        titre: document.getElementById('in-titre').value,
+        items: items,
+        dbImg: dbImg,
+        dbAud: dbAud,
+        typeF: document.getElementById('type-f').value,
+        conF: document.getElementById('con-f').value,
+        typeD: document.getElementById('type-d').value,
+        conD: document.getElementById('con-d').value
+    };
+
+    // 2. Cloniamo l'intero HTML della pagina
+    let docHtml = document.documentElement.outerHTML;
+
+    // 3. Puliamo l'HTML dai valori correnti per evitare conflitti
+    // Rimuoviamo la parte dell'editor (la colonna di sinistra) per il file finale se vuoi solo il gioco
+    // In questo esempio lo lasciamo ma iniettiamo lo script di auto-caricamento
+
+    const scriptIniezione = `
+    <script>
+        window.onload = function() {
+            const data = ${JSON.stringify(configData)};
+            document.getElementById('in-unite').value = data.unite;
+            document.getElementById('in-titre').value = data.titre;
+            document.getElementById('items-list').value = data.items.join('; ');
+            document.getElementById('type-f').value = data.typeF;
+            document.getElementById('con-f').value = data.conF;
+            document.getElementById('type-d').value = data.typeD;
+            document.getElementById('con-d').value = data.conD;
+            
+            // Ripristiniamo i database
+            dbImg = data.dbImg;
+            dbAud = data.dbAud;
+            
+            // Avviamo il gioco
+            initGame();
+        };
+    <\/script>`;
+
+    // Inseriamo lo script prima della chiusura del body
+    const finalHtml = docHtml.replace('</body>', scriptIniezione + '</body>');
+
+    const blob = new Blob([finalHtml], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gioco_' + (configData.titre || 'bsmart') + '.html';
+    a.click();
+}
     </script>
 </body>
 </html>
