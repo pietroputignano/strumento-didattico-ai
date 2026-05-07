@@ -3,214 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Générateur FLE - Hachette Studio Full</title>
+    <title>Loustics Game Studio Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #f1f5f9; }
-        .h-unite { background-color: #1e3a8a; color: white; padding: 15px; font-weight: bold; text-transform: uppercase; text-align: center; }
-        .h-activite { background-color: #f8fafc; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
+        :root {
+            --hfle-blue: #0169B3; --hfle-orange: #EFA92C;
+            --hfle-success: #8dc549; --hfle-error: #d84157;
+        }
+        body { font-family: 'Source Sans Pro', sans-serif; background-color: #f1f5f9; }
         
-        /* Domino Tiles */
-        .domino-tile { border: 3px solid #1e3a8a; border-radius: 12px; display: flex; background: white; overflow: hidden; height: 85px; width: 190px; cursor: grab; flex-shrink: 0; }
-        .tile-img { width: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border-right: 2px dashed #1e3a8a; overflow: hidden; cursor: pointer; position: relative; }
-        .tile-img img { max-height: 90%; max-width: 90%; object-fit: contain; }
-        .tile-text { width: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; text-align: center; padding: 4px; }
+        /* Hachette Title Shadow Effect */
+        .h-titre {
+            font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--hfle-blue);
+            text-shadow: rgb(255, 255, 255) 4px 0px 0px, rgb(255, 255, 255) 3.9px 0.5px 0px, rgb(255, 255, 255) 3.8px 1px 0px;
+        }
         
-        /* Navigation & Drop */
-        .drop-target { width: 190px; height: 85px; border: 3px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: bold; font-size: 12px; }
-        .step-pill { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid #cbd5e1; background: white; cursor: pointer; transition: 0.2s; }
-        .step-pill.active { border-color: #1e3a8a; color: #1e3a8a; background: #eff6ff; }
-        .step-pill.completed { background-color: #10b981 !important; border-color: #10b981 !important; color: white !important; }
+        .h-unite-bar { background-color: var(--hfle-blue); color: white; padding: 12px; text-transform: uppercase; font-weight: 700; text-align: center; }
         
-        /* Letters */
-        .letter-tile { width: 42px; height: 42px; background: #efa92c; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #c78a1e; }
+        /* Game States */
+        .cache-debut { background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .timer-box { background: #DAF8FF; border-radius: 99rem; padding: 4px 15px; color: #3998C8; font-weight: bold; border: 2px solid #3998C8; }
+        
+        /* Step Navigation */
+        .step-pill { 
+            width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; 
+            display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
+        .step-pill.completed { background-color: var(--hfle-success); }
+        .step-pill.error { background-color: var(--hfle-error); }
+
+        /* Dressing Game Specifics */
+        .drop-zone-dressing { position: absolute; border: 2px dashed rgba(1, 105, 179, 0.3); border-radius: 10px; transition: 0.3s; }
+        .drop-zone-dressing.active { background: rgba(141, 197, 73, 0.2); border-color: var(--hfle-success); }
+
+        /* UI Elements */
+        .btn-commencer { background-color: var(--hfle-orange); color: white; padding: 12px 40px; border-radius: 99rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-commencer:hover { background-color: #C66A26; }
     </style>
 </head>
-<body class="p-2 md:p-6">
+<body class="p-2 md:p-4">
 
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-        <div class="lg:w-1/3 bg-white p-5 rounded-xl shadow-lg space-y-5 overflow-y-auto max-h-[95vh]">
-            <h2 class="text-xl font-bold text-blue-900 border-b pb-2 uppercase italic text-center">Configurazione</h2>
+    <div class="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-4">
+        <div class="lg:w-1/4 bg-white p-4 rounded-xl shadow-lg border-t-4 border-blue-600 overflow-y-auto max-h-[95vh] text-xs">
+            <h2 class="text-lg font-bold text-blue-900 mb-4 uppercase italic">Configurazione Game</h2>
             
-            <div class="space-y-4 text-sm">
-                <div>
-                    <p class="font-bold mb-1">Unité (Numéro et Titre)</p>
-                    <input id="in-unite" type="text" class="w-full p-2 border rounded" placeholder="Ex: Unité 1">
-                </div>
-                <div>
-                    <p class="font-bold mb-1">Titre de l'attività (Riga 2)</p>
-                    <input id="in-activite" type="text" class="w-full p-2 border rounded" placeholder="Ex: Le domino">
+            <div class="space-y-4">
+                <div><p class="font-bold mb-1">Unità & Titolo</p>
+                    <input id="in-unite" type="text" class="w-full p-2 border rounded mb-1" placeholder="UNITÉ 4">
+                    <input id="in-titre" type="text" class="w-full p-2 border rounded" placeholder="Charlotte se déguise">
                 </div>
 
-                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
-                    <p class="font-bold uppercase text-blue-800 text-xs">Niveau Facile</p>
-                    <div>
-                        <p class="font-bold text-[11px] mb-1">Consigne</p>
-                        <input id="con-f" type="text" class="w-full p-2 border rounded" value="Relie les dominos.">
+                <div class="p-3 bg-slate-50 rounded border">
+                    <p class="font-bold text-blue-700 uppercase mb-2">Impostazioni Livelli</p>
+                    <select id="type-game" class="w-full p-2 border rounded bg-white mb-2 font-semibold">
+                        <option value="dressing">Dressing Game (Associazione su Sfondo)</option>
+                        <option value="domino">Domino Chain (Testo -> Immagine)</option>
+                        <option value="anagramme">Anagramme (Letter Ordering)</option>
+                    </select>
+                    <div class="flex gap-2 mb-2">
+                        <button onclick="pickAud('con-f')" class="flex-1 p-1 bg-white border rounded">🎵 Audio Facile</button>
+                        <button onclick="pickAud('con-d')" class="flex-1 p-1 bg-white border rounded">🎵 Audio Diff.</button>
                     </div>
-                    <div>
-                        <p class="font-bold text-[11px] mb-1">Tipologia</p>
-                        <select id="type-f" class="w-full p-2 border rounded bg-white">
-                            <option value="domino">Domino Chain (Immagine -> Nome)</option>
-                        </select>
-                    </div>
-                    <button onclick="pickAud('con-f')" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 transition">🎵 Carica Audio Consegna</button>
-                </div>
-
-                <div class="p-3 bg-orange-50 rounded-lg border border-orange-100 space-y-3">
-                    <p class="font-bold uppercase text-orange-800 text-xs">Niveau Difficile</p>
-                    <div>
-                        <p class="font-bold text-[11px] mb-1">Consigne</p>
-                        <input id="con-d" type="text" class="w-full p-2 border rounded" value="Remets les lettres en ordre.">
-                    </div>
-                    <div>
-                        <p class="font-bold text-[11px] mb-1">Tipologia</p>
-                        <select id="type-d" class="w-full p-2 border rounded bg-white">
-                            <option value="anagramme">Anagramme (Letter Drag & Drop)</option>
-                        </select>
-                    </div>
-                    <button onclick="pickAud('con-d')" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 transition">🎵 Carica Audio Consegna</button>
+                    <p class="font-bold">Timer (sec)</p>
+                    <input id="timer-val" type="number" class="w-full p-2 border rounded" value="20">
                 </div>
 
                 <div>
-                    <p class="font-bold mb-1">Items (separati da ;)</p>
-                    <textarea id="items-list" class="w-full h-24 p-2 border rounded text-xs" placeholder="item1; item2; item3"></textarea>
+                    <p class="font-bold mb-1">Voci (separate da ;)</p>
+                    <textarea id="items-list" class="w-full h-32 p-2 border rounded" placeholder="le chapeau; les lunettes; le sac"></textarea>
                 </div>
             </div>
 
-            <button onclick="updatePreview()" class="w-full bg-blue-700 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-800 transition">👁️ AGGIORNA ANTEPRIMA</button>
+            <button onclick="initGenerator()" class="w-full mt-4 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">🚀 GENERA ATTIVITÀ</button>
         </div>
 
-        <div class="lg:w-2/3 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[600px]">
-            <div id="res-unite" class="h-unite">UNITÉ</div>
-            <div class="h-activite flex justify-between items-center">
-                <span id="txt-activite">ACTIVITÉ</span>
-                <div class="flex gap-2">
-                    <button id="btn-f" onclick="switchLevel('f')" class="px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 bg-blue-800 text-white">FACILE</button>
-                    <button id="btn-d" onclick="switchLevel('d')" class="px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 text-blue-800">DIFFICILE</button>
+        <div id="game-container" class="lg:w-3/4 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[660px] relative">
+            
+            <div id="intro-screen" class="absolute inset-0 cache-debut">
+                <p class="text-xl font-bold text-blue-800 mb-2 uppercase">Exemple</p>
+                <div id="example-box" class="w-64 h-48 border-2 border-dashed border-blue-200 rounded-xl mb-6 flex items-center justify-center bg-slate-50">
+                    <span class="text-gray-400">Preview Esempio</span>
+                </div>
+                <button onclick="startGame()" class="btn-commencer">COMMENCER</button>
+            </div>
+
+            <div id="res-unite" class="h-unite-bar">UNITÉ</div>
+            <div class="px-6 py-4 flex justify-between items-center border-b">
+                <h1 id="res-titre" class="h-titre text-2xl md:text-3xl">TITRE</h1>
+                <div id="timer-display" class="timer-box hidden">00:20</div>
+                <div class="flex gap-1">
+                    <button id="btn-f" onclick="setLvl('f')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white">FACILE</button>
+                    <button id="btn-d" onclick="setLvl('d')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800">DIFFICILE</button>
                 </div>
             </div>
 
-            <div class="p-6 flex-grow flex flex-col items-center">
-                <div class="flex items-center gap-3 mb-6 bg-slate-50 px-4 py-2 rounded-full border">
-                    <p id="res-consigne" class="italic text-gray-700 font-medium"></p>
-                    <button onclick="playAud('consigne')" class="text-blue-600 text-xl hover:scale-125 transition">🔊</button>
+            <div class="flex-grow flex flex-col items-center p-4 md:p-8 relative">
+                <div class="flex items-center gap-3 mb-6">
+                    <p id="res-consigne" class="italic text-gray-700 font-semibold text-lg"></p>
+                    <button onclick="playConsigne()" class="text-blue-600 text-2xl transition hover:scale-125">🔊</button>
                 </div>
-                
-                <div id="game-stage" class="w-full flex flex-col items-center gap-6"></div>
-                
-                <div id="options-pool" class="mt-8 flex flex-wrap justify-center gap-4 w-full p-4 border-t border-dashed border-slate-200"></div>
+
+                <div id="stage" class="w-full h-full flex flex-col items-center justify-center relative">
+                    </div>
+
+                <div id="asset-pool" class="w-full mt-auto p-4 border-t border-dashed flex flex-wrap justify-center gap-4"></div>
             </div>
 
-            <div id="step-nav" class="p-4 bg-slate-100 border-t flex justify-center gap-2 flex-wrap"></div>
+            <div id="nav-bar" class="p-4 bg-slate-50 border-t flex justify-center gap-2"></div>
         </div>
     </div>
 
-    <input type="file" id="imgInp" class="hidden" accept="image/*" onchange="saveImg(event)">
-    <input type="file" id="audInp" class="hidden" accept="audio/*" onchange="saveAud(event)">
+    <input type="file" id="imgInp" class="hidden" accept="image/*" onchange="handleImg(event)">
+    <input type="file" id="audInp" class="hidden" accept="audio/*" onchange="handleAud(event)">
 
     <script>
-        let items = [], curLvl = 'f', curStep = 0, dbImg = {}, dbAud = {}, stepStatus = [];
-        let activeKey = "";
+        let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'f', status = [];
+        let timer, timeLeft = 0, activeK = "";
 
-        function updatePreview() {
-            items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i!=="");
-            document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
-            document.getElementById('txt-activite').innerText = document.getElementById('in-activite').value || "ACTIVITÉ";
-            stepStatus = new Array(items.length).fill(false);
-            if(items.length > 0) loadStep(0);
+        function initGenerator() {
+            items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i);
+            document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ 1";
+            document.getElementById('res-titre').innerText = document.getElementById('in-titre').value || "ACTIVITÉ";
+            status = new Array(items.length).fill('pending');
+            document.getElementById('intro-screen').classList.remove('hidden');
+            renderNav();
+            loadStep(0);
+        }
+
+        function startGame() {
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('timer-display').classList.remove('hidden');
+            startTimer();
         }
 
         function loadStep(idx) {
             curStep = idx;
             renderNav();
-            const stage = document.getElementById('game-stage');
-            const pool = document.getElementById('options-pool');
+            const stage = document.getElementById('stage');
+            const pool = document.getElementById('asset-pool');
             const word = items[idx];
-            
-            if(curLvl === 'f') {
-                document.getElementById('res-consigne').innerText = document.getElementById('con-f').value;
-                stage.innerHTML = `<div class="flex flex-col md:flex-row items-center gap-6">
-                    <div class="domino-tile opacity-50 bg-slate-50"><div class="tile-img">?</div><div class="tile-text">${word}</div></div>
-                    <div class="text-2xl text-blue-300 rotate-90 md:rotate-0">➜</div>
-                    <div id="drop-zone" class="drop-target shadow-inner">TRASCINA QUI</div>
-                </div>`;
-                
-                // Mappa delle tessere con indicazione esplicita di cosa caricare
+            const type = document.getElementById('type-game').value;
+
+            if(type === 'dressing') {
+                document.getElementById('res-consigne').innerText = "Écoute et déguise le personaggio.";
+                stage.innerHTML = `
+                    <div class="relative w-full max-w-md h-[400px] bg-slate-100 rounded-2xl border-4 border-white shadow-inner flex items-center justify-center overflow-hidden" onclick="pickImg('bg_game')">
+                        ${dbImg['bg_game'] ? `<img src="${dbImg['bg_game']}" class="max-h-full">` : '📷 CARICA SFONDO (Charlotte/Lupin)'}
+                        <div id="target" class="drop-zone-dressing" style="width:100px; height:100px; top:20%; left:35%;"></div>
+                    </div>
+                `;
                 pool.innerHTML = items.map(it => `
-                    <div class="domino-tile shadow-md hover:shadow-xl transition" data-word="${it}">
-                        <div class="tile-img" onclick="pickImg('${it}')">
-                            ${dbImg[it] ? `<img src="${dbImg[it]}">` : `
-                                <div class="flex flex-col items-center opacity-40">
-                                    <span class="text-sm">📷</span>
-                                    <span class="text-[7px] font-bold uppercase">Foto ${it}</span>
-                                </div>
-                            `}
-                        </div>
-                        <div class="tile-text">${it}</div>
+                    <div class="w-24 h-24 bg-white border-2 border-blue-400 rounded-lg shadow-md cursor-grab flex items-center justify-center p-1" data-word="${it}" onclick="pickImg('${it}')">
+                        ${dbImg[it] ? `<img src="${dbImg[it]}" class="max-h-full">` : `<span class="text-[8px] text-center">Foto<br>${it}</span>`}
                     </div>`).join('');
                 
-                new Sortable(pool, { group: { name:'dom', pull:'clone', put:false }, sort:false });
-                new Sortable(document.getElementById('drop-zone'), { group: 'dom', onAdd: (e) => {
-                    const dragged = e.item.getAttribute('data-word');
-                    const nextTarget = items[curStep + 1] || items[0];
-                    if(dragged === nextTarget) { 
-                        confetti(); 
-                        stepStatus[curStep]=true; 
-                        setTimeout(()=>loadStep(curStep < items.length-1 ? curStep+1 : 0), 1000); 
-                    } else { alert("Réessaie ! Tu dois trouver : " + nextTarget); e.item.remove(); }
+                new Sortable(pool, { group: { name:'dg', pull:'clone', put:false }, sort:false });
+                new Sortable(document.getElementById('target'), { group: 'dg', onAdd: (e) => {
+                    if(e.item.getAttribute('data-word') === word) { validate(true); }
+                    else { validate(false); e.item.remove(); }
                 }});
-            } else {
-                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value;
-                pool.innerHTML = "";
-                const shuffled = word.split('').sort(()=>Math.random()-0.5);
-                stage.innerHTML = `
-                    <div class="flex flex-col items-center gap-6">
-                        <div class="w-32 h-32 border-4 border-blue-900 rounded-2xl overflow-hidden bg-white shadow-lg cursor-pointer" onclick="pickImg('${word}')">
-                            ${dbImg[word] ? `<img src="${dbImg[word]}" class="w-full h-full object-contain">` : `<span class="text-xs text-blue-400">Carica foto ${word}</span>`}
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-2">
-                            ${word.split('').map(()=>`<div class="w-10 h-10 border-2 border-dashed border-blue-300 rounded flex items-center justify-center font-bold bg-white"></div>`).join('')}
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-2 mt-4">
-                            ${shuffled.map(l => `<div class="letter-tile">${l.toUpperCase()}</div>`).join('')}
-                        </div>
-                        <button onclick="completeStep()" class="text-[10px] text-gray-400 underline">(Simula validazione)</button>
-                    </div>`;
             }
         }
 
-        function completeStep() {
-            confetti();
-            stepStatus[curStep] = true;
+        function validate(correct) {
+            if(correct) {
+                confetti();
+                status[curStep] = 'completed';
+                new Audio(dbAud['award'] || 'https://www.soundjay.com/buttons/sounds/button-3.mp3').play();
+                setTimeout(() => { if(curStep < items.length-1) loadStep(curStep+1); else alert("FINI !"); }, 1500);
+            } else {
+                status[curStep] = 'error';
+                new Audio(dbAud['wrong'] || 'https://www.soundjay.com/buttons/sounds/button-10.mp3').play();
+            }
             renderNav();
-            setTimeout(() => { if(curStep < items.length - 1) loadStep(curStep + 1); else alert("EXERCICE TERMINÉ !"); }, 1000);
+        }
+
+        function startTimer() {
+            timeLeft = parseInt(document.getElementById('timer-val').value);
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+                if(timeLeft === 4) { /* Play urgency sound */ }
+                if(timeLeft <= 0) { clearInterval(timer); alert("TEMPS ÉCOULÉ !"); }
+            }, 1000);
         }
 
         function renderNav() {
-            const nav = document.getElementById('step-nav');
-            nav.innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${stepStatus[i]?'completed':''}" onclick="loadStep(${i})">${i+1}</div>`).join('');
+            const nav = document.getElementById('nav-bar');
+            nav.innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${status[i]}" onclick="loadStep(${i})">${i+1}</div>`).join('');
         }
 
-        function playAud(t) {
-            const key = t==='consigne' ? (curLvl==='f'?'con-f':'con-d') : items[curStep];
-            if(dbAud[key]) { new Audio(dbAud[key]).play(); }
-            else { const msg = new SpeechSynthesisUtterance(type === 'consigne' ? document.getElementById(key).value : items[curStep]); msg.lang='fr-FR'; window.speechSynthesis.speak(msg); }
-        }
-
-        function switchLevel(l) { curLvl = l; 
-            document.getElementById('btn-f').className = l==='f' ? 'px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 text-blue-800';
-            document.getElementById('btn-d').className = l==='d' ? 'px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-[10px] font-bold border-2 border-blue-800 text-blue-800';
-            updatePreview(); 
-        }
-
-        function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
-        function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
-        function saveImg(e) { const r = new FileReader(); r.onload = (ev) => { dbImg[activeKey] = ev.target.result; loadStep(curStep); }; r.readAsDataURL(e.target.files[0]); }
-        function saveAud(e) { const r = new FileReader(); r.onload = (ev) => { dbAud[activeKey] = ev.target.result; alert("Audio MP3 salvato!"); }; r.readAsDataURL(e.target.files[0]); }
+        function pickImg(k) { activeK = k; document.getElementById('imgInp').click(); }
+        function pickAud(k) { activeK = k; document.getElementById('audInp').click(); }
+        function handleImg(e) { const r = new FileReader(); r.onload=(ev)=>{dbImg[activeK]=ev.target.result; loadStep(curStep);}; r.readAsDataURL(e.target.files[0]); }
+        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeK]=ev.target.result; alert("Audio MP3 salvato!");}; r.readAsDataURL(e.target.files[0]); }
+        function setLvl(l) { curLvl = l; initGenerator(); }
     </script>
 </body>
 </html>
