@@ -1,3 +1,13 @@
+Ottima idea. Il sistema **"Click-to-Move"** (clicca per spostare) è molto più fluido per gli anagrammi, specialmente su tablet o smartphone, perché evita la frustrazione del trascinamento impreciso.
+
+Ho aggiornato la logica:
+1.  **Anagramme Click-to-Move**: Cliccando una lettera nel "pool" (sotto), questa sale automaticamente nella prima posizione libera del "target" (sopra). Cliccando una lettera sopra, questa torna giù.
+2.  **Correzione in tempo reale**: Lo studente può cambiare l'ordine in qualsiasi momento cliccando per far scendere le lettere e cliccando per farle risalire.
+3.  **Verifica Automatica**: Il sistema controlla la parola ogni volta che il "target" è pieno.
+
+Ecco il codice completo aggiornato con questa nuova modalità:
+
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -268,3 +278,4 @@
     </script>
 </body>
 </html>
+```
