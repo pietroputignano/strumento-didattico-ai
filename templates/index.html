@@ -201,6 +201,15 @@
                 m.lang='fr-FR'; window.speechSynthesis.speak(m); 
             }
         }
+        function downloadGame() {
+            const content = document.getElementById('capture-area').innerHTML;
+            const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script><style>.h-unite{background:#1e3a8a;color:white;padding:12px;font-weight:bold;text-transform:uppercase}.h-activite{background:#f1f5f9;color:#475569;padding:10px;font-weight:bold;border-bottom:2px solid #e2e8f0}.domino-card{border:2px solid #1e3a8a;border-radius:8px;width:130px;background:white;display:inline-block;margin:5px}<\/style><\/head><body>${content}<\/body><\/html>`;
+            const blob = new Blob([fullHtml], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'exercice_fle.html';
+            a.click();
+        }
     </script>
 </body>
 </html>
