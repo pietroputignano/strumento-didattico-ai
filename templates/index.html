@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --hfle-blue: #0169B3; --hfle-orange: #EFA92C; --hfle-success: #8dc549; --hfle-error: #d84157; }
@@ -18,53 +17,52 @@
         .step-pill { width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; }
         .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
         .step-pill.completed { background-color: var(--hfle-success); }
+        
+        /* Domino Style */
         .domino-tile { border: 3px solid var(--hfle-blue); border-radius: 12px; display: flex; background: white; overflow: hidden; height: 85px; width: 190px; cursor: grab; flex-shrink: 0; }
         .tile-img { width: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border-right: 2px dashed var(--hfle-blue); overflow: hidden; position: relative; }
         .tile-img img { max-height: 85%; max-width: 85%; object-fit: contain; }
         .tile-text { width: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; text-align: center; padding: 4px; }
+        
         .drop-target { width: 190px; height: 85px; border: 3px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: bold; }
-        .letter-tile { width: 42px; height: 42px; background: var(--hfle-orange); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #c78a1e; }
+        
+        /* Anagramme Click Style */
+        .letter-tile { width: 45px; height: 45px; background: var(--hfle-orange); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; cursor: pointer; box-shadow: 0 4px 0 #c78a1e; transition: all 0.1s; }
+        .letter-tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #c78a1e; }
+        .target-slot { width: 45px; height: 45px; border-bottom: 3px solid #cbd5e1; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="p-2 md:p-4">
 
     <div class="max-w-[1500px] mx-auto flex flex-col lg:flex-row gap-4">
-        <div class="lg:w-1/3 bg-white p-5 rounded-xl shadow-lg border-t-8 border-blue-800 overflow-y-auto max-h-[95vh] text-xs">
+        <div id="editor-panel" class="lg:w-1/3 bg-white p-5 rounded-xl shadow-lg border-t-8 border-blue-800 overflow-y-auto max-h-[95vh] text-xs">
             <h2 class="text-xl font-bold text-blue-900 mb-4 uppercase italic border-b pb-2 text-center">Configurazione</h2>
             <div class="space-y-4">
-                <div><p class="font-bold uppercase mb-1">Unité & Titolo</p>
+                <div><p class="font-bold uppercase mb-1">Unité & Titre</p>
                     <input id="in-unite" type="text" class="w-full p-2 border rounded mb-1" placeholder="UNITÉ 1">
-                    <input id="in-titre" type="text" class="w-full p-2 border rounded" placeholder="Titre de l'activité">
+                    <input id="in-titre" type="text" class="w-full p-2 border rounded" placeholder="Titre de l'attività">
                 </div>
-                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
-                    <p class="font-bold text-blue-800 uppercase">Niveau Facile</p>
-                    <div>
-                        <p class="font-bold text-[10px] mb-1">Consigne Facile</p>
-                        <input id="con-f" type="text" class="w-full p-2 border rounded mb-2" value="Lis et déplace les dominos.">
-                        <p class="font-bold text-[10px] mb-1">Tipologia</p>
-                        <select id="type-f" class="w-full p-2 border rounded bg-white">
-                            <option value="domino">Domino Chain</option>
-                            <option value="anagramme">Anagramme</option>
-                        </select>
-                        <button onclick="pickAud('con-f')" class="mt-2 bg-white border p-1 rounded w-full shadow-sm hover:bg-gray-50">🎵 Carica Audio Consegna Facile</button>
-                    </div>
+                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="font-bold text-blue-800 uppercase mb-1">Niveau Facile</p>
+                    <input id="con-f" type="text" class="w-full p-2 border rounded mb-2" value="Lis et déplace les dominos.">
+                    <select id="type-f" class="w-full p-2 border rounded bg-white">
+                        <option value="domino">Domino Chain</option>
+                        <option value="anagramme">Anagramme</option>
+                    </select>
+                    <button onclick="pickAud('con-f')" class="mt-2 bg-white border p-1 rounded w-full">🎵 Audio Consigne Facile</button>
                 </div>
-                <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 space-y-2">
-                    <p class="font-bold text-orange-800 uppercase">Niveau Difficile</p>
-                    <div>
-                        <p class="font-bold text-[10px] mb-1">Consigne Difficile</p>
-                        <input id="con-d" type="text" class="w-full p-2 border rounded mb-2" value="Remets le mot dans l'ordre.">
-                        <p class="font-bold text-[10px] mb-1">Tipologia</p>
-                        <select id="type-d" class="w-full p-2 border rounded bg-white">
-                            <option value="anagramme">Anagramme</option>
-                            <option value="domino">Domino Chain</option>
-                        </select>
-                        <button onclick="pickAud('con-d')" class="mt-2 bg-white border p-1 rounded w-full shadow-sm hover:bg-gray-50">🎵 Carica Audio Consegna Difficile</button>
-                    </div>
+                <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p class="font-bold text-orange-800 uppercase mb-1">Niveau Difficile</p>
+                    <input id="con-d" type="text" class="w-full p-2 border rounded mb-2" value="Remets le mot dans l'ordre.">
+                    <select id="type-d" class="w-full p-2 border rounded bg-white">
+                        <option value="anagramme">Anagramme</option>
+                        <option value="domino">Domino Chain</option>
+                    </select>
+                    <button onclick="pickAud('con-d')" class="mt-2 bg-white border p-1 rounded w-full">🎵 Audio Consigne Difficile</button>
                 </div>
                 <div>
-                    <p class="font-bold uppercase mb-1">Mots (item1; item2; ...)</p>
-                    <textarea id="items-list" class="w-full h-24 p-2 border rounded" placeholder="armoire; couette; finestra; lampe"></textarea>
+                    <p class="font-bold uppercase mb-1">Mots (séparés par ;)</p>
+                    <textarea id="items-list" class="w-full h-24 p-2 border rounded" placeholder="la couette; l'armoire; la fenêtre"></textarea>
                 </div>
             </div>
             <button onclick="initGame()" class="w-full mt-4 bg-blue-700 text-white py-3 rounded-lg font-bold">🚀 AGGIORNA ANTEPRIMA</button>
@@ -76,17 +74,19 @@
             <div class="px-6 py-4 flex justify-between items-center border-b">
                 <h1 id="res-titre" class="h-titre text-2xl uppercase">TITRE</h1>
                 <div class="flex gap-1">
-                    <button id="btn-f" onclick="switchLvl('f')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white shadow-md">FACILE</button>
-                    <button id="btn-d" onclick="switchLvl('d')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800 shadow-md">DIFFICILE</button>
+                    <button id="btn-f" onclick="switchLvl('f')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white">FACILE</button>
+                    <button id="btn-d" onclick="switchLvl('d')" class="px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800">DIFFICILE</button>
                 </div>
             </div>
             <div class="p-6 flex-grow flex flex-col items-center">
                 <div class="flex items-center gap-3 mb-8 bg-slate-50 px-6 py-2 rounded-full border">
                     <p id="res-consigne" class="italic text-gray-700 font-semibold"></p>
-                    <button onclick="playConsigne()" class="text-blue-600 text-2xl hover:scale-125 transition">🔊</button>
+                    <button onclick="playConsigne()" class="text-blue-600 text-2xl">🔊</button>
                 </div>
-                <div id="main-content" class="w-full flex flex-col items-center gap-8"></div>
-                <div id="pool" class="mt-auto p-4 w-full flex flex-wrap justify-center gap-4 border-t border-dashed border-slate-200"></div>
+                
+                <div id="main-content" class="w-full flex flex-col items-center justify-center min-h-[150px]"></div>
+                
+                <div id="pool" class="mt-auto p-6 w-full flex flex-wrap justify-center gap-4 border-t border-dashed border-slate-200 min-h-[120px]"></div>
             </div>
             <div id="nav-step" class="p-4 bg-slate-50 border-t flex justify-center gap-2 flex-wrap"></div>
         </div>
@@ -98,11 +98,9 @@
     <script>
         let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'f', status = [], activeKey = "";
 
-        // ... mantieni le tue funzioni initGame, loadStep, setupSortable, validate, renderNav, switchLvl, pickImg, pickAud, handleImg, handleAud, playConsigne ...
-        // (Assicurati che siano presenti nel tuo script)
-
         function initGame() {
             items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i);
+            if(items.length === 0) return;
             document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
             document.getElementById('res-titre').innerText = document.getElementById('in-titre').value || "ACTIVITÉ";
             status = new Array(items.length).fill('pending');
@@ -113,48 +111,114 @@
             curStep = idx; renderNav();
             const stage = document.getElementById('main-content');
             const pool = document.getElementById('pool');
-            const word = items[idx];
+            const word = items[idx].replace(/\s/g, ''); // Rimuoviamo spazi per anagramma
             const type = curLvl === 'f' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
-            const consigne = curLvl === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
-            document.getElementById('res-consigne').innerText = consigne;
+            document.getElementById('res-consigne').innerText = curLvl === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
 
             if(type === 'domino') {
-                stage.innerHTML = `<div class="flex items-center gap-6"><div class="domino-tile opacity-40 bg-slate-50"><div class="tile-img">?</div><div class="tile-text">${word}</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">TRASCINA QUI</div></div>`;
+                const displayWord = items[idx];
+                stage.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="domino-tile">
+                        <div class="tile-img">${dbImg[displayWord] ? `<img src="${dbImg[displayWord]}">` : '📷'}</div>
+                        <div class="tile-text">${displayWord}</div>
+                    </div>
+                    <div class="text-2xl text-blue-400 font-bold">➔</div>
+                    <div id="target" class="drop-target">DÉPLACE ICI</div>
+                </div>`;
                 pool.innerHTML = items.map((it, i) => {
-                    const imgNeeded = i === 0 ? items[items.length - 1] : items[i - 1]; 
-                    return `<div class="domino-tile shadow-md" data-word="${it}"><div class="tile-img" onclick="pickImg('${imgNeeded}')">${dbImg[imgNeeded] ? `<img src="${dbImg[imgNeeded]}">` : `<div class="flex flex-col items-center opacity-60"><span class="text-xs">📷</span><span class="text-[7px] text-blue-600 font-bold uppercase">Foto ${imgNeeded}</span></div>`}</div><div class="tile-text">${it}</div></div>`;
-                }).join('');
-                setupSortable('dom', word);
+                    const imgNeeded = i === 0 ? items[items.length-1] : items[i-1];
+                    return `<div class="domino-tile shadow-md" data-word="${it}" onclick="if(event.target.closest('.tile-img')) pickImg('${imgNeeded}')">
+                        <div class="tile-img">${dbImg[imgNeeded] ? `<img src="${dbImg[imgNeeded]}">` : `<span class="text-[8px] uppercase">Foto ${imgNeeded}</span>`}</div>
+                        <div class="tile-text">${it}</div>
+                    </div>`;
+                }).sort(() => Math.random() - 0.5).join('');
+                setupSortable('dom', displayWord);
             } else {
-                const shuffled = word.split('').sort(()=>Math.random()-0.5);
-                stage.innerHTML = `<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md" onclick="pickImg('${word}')">${dbImg[word]?`<img src="${dbImg[word]}" class="h-full w-full object-contain">`:'📷'}</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>`;
-                pool.innerHTML = shuffled.map(l => `<div class="letter-tile" data-letter="${l}">${l.toUpperCase()}</div>`).join('');
-                setupSortable('ana', word);
+                // ANAGRAMME CLICK-TO-MOVE
+                const chars = word.split('');
+                const shuffled = [...chars].sort(()=>Math.random()-0.5);
+                
+                stage.innerHTML = `
+                <div class="flex flex-col items-center gap-6">
+                    <div class="w-28 h-28 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md" onclick="pickImg('${items[idx]}')">
+                        ${dbImg[items[idx]]?`<img src="${dbImg[items[idx]]}" class="h-full w-full object-contain">`:'📷'}
+                    </div>
+                    <div id="target" class="flex gap-2 min-h-[50px] p-2">
+                        ${chars.map(() => `<div class="target-slot" onclick="handleReturn(this)"></div>`).join('')}
+                    </div>
+                </div>`;
+                
+                pool.innerHTML = shuffled.map(l => `<div class="letter-tile" onclick="handleMove(this)" data-letter="${l}">${l.toUpperCase()}</div>`).join('');
+            }
+        }
+
+        // Funzione per muovere la lettera nel target
+        function handleMove(el) {
+            const slots = document.querySelectorAll('.target-slot');
+            for (let slot of slots) {
+                if (slot.innerHTML === "") {
+                    el.style.visibility = "hidden"; // Nasconde dal pool
+                    const clone = el.cloneNode(true);
+                    clone.style.visibility = "visible";
+                    clone.setAttribute('data-origin', Array.from(el.parentNode.children).indexOf(el));
+                    slot.appendChild(clone);
+                    checkAnagram();
+                    break;
+                }
+            }
+        }
+
+        // Funzione per far tornare la lettera nel pool
+        function handleReturn(slot) {
+            const letter = slot.querySelector('.letter-tile');
+            if (letter) {
+                const originIdx = letter.getAttribute('data-origin');
+                const original = document.getElementById('pool').children[originIdx];
+                original.style.visibility = "visible";
+                slot.innerHTML = "";
+            }
+        }
+
+        function checkAnagram() {
+            const slots = document.querySelectorAll('.target-slot');
+            const current = Array.from(slots).map(s => s.firstChild ? s.firstChild.getAttribute('data-letter') : "").join('');
+            const targetWord = items[curStep].replace(/\s/g, '');
+            
+            if (current === targetWord) {
+                validate(true);
+            } else if (current.length === targetWord.length) {
+                // Se piena ma sbagliata, diamo un piccolo feedback visivo
+                slots.forEach(s => s.style.borderColor = "var(--hfle-error)");
+                setTimeout(() => slots.forEach(s => s.style.borderColor = "#cbd5e1"), 500);
             }
         }
 
         function setupSortable(mode, targetWord) {
+            if(mode !== 'dom') return;
             const pool = document.getElementById('pool');
             const target = document.getElementById('target');
-            new Sortable(pool, { group: 'game', sort: false });
+            new Sortable(pool, { group: 'game', animation: 150 });
             new Sortable(target, { 
                 group: 'game',
                 onAdd: (e) => {
-                    if(mode === 'dom') {
-                        const nextItem = items[curStep + 1] || items[0];
-                        if(e.item.getAttribute('data-word') === nextItem) validate(true);
-                        else { alert("Riprova!"); e.item.remove(); }
+                    const nextWord = items[curStep + 1] || items[0];
+                    if(e.item.getAttribute('data-word') === nextWord) {
+                        target.innerHTML = ''; target.appendChild(e.item);
+                        validate(true);
                     } else {
-                        const current = Array.from(target.children).map(el=>el.getAttribute('data-letter')).join('');
-                        if(current === targetWord) validate(true);
+                        setTimeout(() => { pool.appendChild(e.item); alert("Réssaye!"); }, 300);
                     }
                 }
             });
         }
 
         function validate(correct) {
-            if(correct) { confetti(); status[curStep]='completed'; setTimeout(()=>loadStep(curStep < items.length-1 ? curStep+1 : 0), 1200); }
-            else status[curStep]='error';
+            if(correct) { 
+                confetti(); 
+                status[curStep]='completed'; 
+                setTimeout(()=>loadStep(curStep < items.length-1 ? curStep+1 : 0), 1200); 
+            }
             renderNav();
         }
 
@@ -164,88 +228,42 @@
 
         function switchLvl(l) { 
             curLvl = l; 
-            document.getElementById('btn-f').className = l==='f' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
-            document.getElementById('btn-d').className = l==='d' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
+            document.getElementById('btn-f').className = l==='f' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
+            document.getElementById('btn-d').className = l==='d' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 bg-blue-800 text-white' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-800 text-blue-800';
             initGame();
         }
 
         function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
         function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
         function handleImg(e) { const r = new FileReader(); r.onload=(ev)=>{dbImg[activeKey]=ev.target.result; loadStep(curStep);}; r.readAsDataURL(e.target.files[0]); }
-        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio MP3 salvato!");}; r.readAsDataURL(e.target.files[0]); }
+        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio salvato!");}; r.readAsDataURL(e.target.files[0]); }
         
         function playConsigne() { 
             const key = curLvl === 'f' ? 'con-f' : 'con-d';
-            if(dbAud[key]) {
-                const a = new Audio(dbAud[key]);
-                a.play().catch(e => console.error(e));
-            } else { 
-                const m=new SpeechSynthesisUtterance(document.getElementById(key).value); 
-                m.lang='fr-FR'; window.speechSynthesis.speak(m); 
-            }
+            if(dbAud[key]) new Audio(dbAud[key]).play();
+            else { const m=new SpeechSynthesisUtterance(document.getElementById(key).value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
         }
 
-        // FUNZIONE DOWNLOAD AGGIORNATA
         async function downloadGame() {
-            if (items.length === 0) { alert("Configura prima l'attività!"); return; }
-            const rawTitle = document.getElementById('in-titre').value || 'attivita';
-            const fileName = rawTitle.replace(/\s+/g, '_').toLowerCase();
+            const zip = new JSZip();
+            const configData = {
+                unite: document.getElementById('in-unite').value,
+                titre: document.getElementById('in-titre').value,
+                items: items, dbImg: dbImg, dbAud: dbAud,
+                typeF: document.getElementById('type-f').value, conF: document.getElementById('con-f').value,
+                typeD: document.getElementById('type-d').value, conD: document.getElementById('con-d').value
+            };
+            const head = document.head.innerHTML;
+            const game = document.getElementById('game-container').cloneNode(true);
+            game.classList.remove('lg:w-2/3'); game.classList.add('w-full', 'max-w-4xl', 'mx-auto', 'my-10');
 
-            if (typeof JSZip === 'undefined') { alert("Errore: JSZip non caricato. Verifica la connessione."); return; }
-
-            try {
-                const zip = new JSZip();
-                const configData = {
-                    unite: document.getElementById('in-unite').value,
-                    titre: document.getElementById('in-titre').value,
-                    items: items,
-                    dbImg: dbImg,
-                    dbAud: dbAud,
-                    typeF: document.getElementById('type-f').value,
-                    conF: document.getElementById('con-f').value,
-                    typeD: document.getElementById('type-d').value,
-                    conD: document.getElementById('con-d').value
-                };
-
-                const headContent = document.head.innerHTML;
-                const gameUI = document.getElementById('game-container').cloneNode(true);
-                gameUI.classList.remove('lg:w-2/3');
-                gameUI.classList.add('w-full', 'max-w-4xl', 'mx-auto', 'my-10');
-
-                const finalHtml = `<!DOCTYPE html>
-<html lang="fr">
-<head>${headContent}<style>.tile-img[onclick], .tile-text[onclick], .w-32[onclick] { cursor: default !important; pointer-events: none !important; }.h-unite-bar { border-radius: 12px 12px 0 0; }</style></head>
-<body class="p-2 md:p-4 bg-slate-100">
-<div class="max-w-[1200px] mx-auto">${gameUI.outerHTML}</div>
-<script>
-let items=[], dbImg={}, dbAud={}, curStep=0, curLvl='f', status=[], activeKey="";
-const data = ${JSON.stringify(configData)};
-${initGame.toString()}
-${loadStep.toString()}
-${setupSortable.toString()}
-${validate.toString()}
-${renderNav.toString()}
-${switchLvl.toString()}
-${playConsigne.toString()}
-window.onload = function() {
-    dbImg = data.dbImg; dbAud = data.dbAud;
-    document.body.insertAdjacentHTML('beforeend', '<div style="display:none"><input id="in-unite" value="'+data.unite+'"><input id="in-titre" value="'+data.titre+'"><textarea id="items-list">'+data.items.join(';')+'</textarea><input id="type-f" value="'+data.typeF+'"><input id="con-f" value="'+data.conF+'"><input id="type-d" value="'+data.typeD+'"><input id="con-d" value="'+data.conD+'"></div>');
-    initGame();
-};
-<\/script></body></html>`;
-
-                zip.file("index.html", finalHtml);
-                const content = await zip.generateAsync({type:"blob"});
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(content);
-                link.download = fileName + ".zip";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (err) {
-                console.error(err);
-                alert("Errore durante la creazione dello ZIP.");
-            }
+            const finalHtml = `<!DOCTYPE html><html lang="fr"><head>${head}</head><body class="p-4 bg-slate-100"><div class="max-w-[1200px] mx-auto">${game.outerHTML}</div><script>let items=[], dbImg={}, dbAud={}, curStep=0, curLvl='f', status=[]; const data=${JSON.stringify(configData)}; ${initGame.toString()} ${loadStep.toString()} ${handleMove.toString()} ${handleReturn.toString()} ${checkAnagram.toString()} ${setupSortable.toString()} ${validate.toString()} ${renderNav.toString()} ${switchLvl.toString()} ${playConsigne.toString()} window.onload=function(){ dbImg=data.dbImg; dbAud=data.dbAud; document.body.insertAdjacentHTML('beforeend', '<div style="display:none"><input id="in-unite" value="'+data.unite+'"><input id="in-titre" value="'+data.titre+'"><textarea id="items-list">'+data.items.join(';')+'</textarea><input id="type-f" value="'+data.typeF+'"><input id="con-f" value="'+data.conF+'"><input id="type-d" value="'+data.typeD+'"><input id="con-d" value="'+data.conD+'"></div>'); initGame(); }; <\/script></body></html>`;
+            zip.file("index.html", finalHtml);
+            const content = await zip.generateAsync({type:"blob"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(content);
+            link.download = (configData.titre || "jeu").replace(/\s/g, "_") + ".zip";
+            link.click();
         }
     </script>
 </body>
