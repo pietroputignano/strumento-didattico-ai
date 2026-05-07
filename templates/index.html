@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Générateur FLE Hachette</title>
+    <title>Générateur FLE Hachette - Audio Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -11,91 +11,82 @@
         .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
         .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; transition: 0.2s; }
         .btn-lvl.active { background-color: #1e3a8a; color: white; }
-        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; width: 130px; background: white; cursor: move; }
-        .img-placeholder { height: 90px; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; border-bottom: 1px solid #e2e8f0; }
+        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; width: 130px; background: white; overflow: hidden; }
+        .img-placeholder { height: 90px; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; border-bottom: 1px solid #e2e8f0; }
         .img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+        .audio-btn { cursor: pointer; transition: transform 0.1s; }
+        .audio-btn:active { transform: scale(1.2); }
     </style>
 </head>
 <body class="bg-slate-200 p-4 md:p-8">
 
     <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-        
         <div class="lg:w-2/5 bg-white p-6 rounded-xl shadow-xl space-y-6 overflow-y-auto max-h-[90vh]">
-            <h2 class="text-2xl font-bold text-blue-900 border-b pb-2">Configurazione</h2>
+            <h2 class="text-2xl font-bold text-blue-900 border-b pb-2 text-center">⚙️ Configurazione</h2>
             
             <div class="space-y-4">
-                <div>
-                    <label class="text-xs font-bold text-blue-800 uppercase">Unità (Numero e Titolo)</label>
-                    <input id="in-unite" type="text" class="w-full p-2 border rounded focus:border-blue-500 outline-none" placeholder="es: Unité 1 : La chambre">
-                </div>
-
-                <div class="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
-                    <span class="font-bold text-blue-800 text-sm">LIVELLO FACILE</span>
-                    <input id="con-f" type="text" class="w-full p-2 border rounded text-sm" placeholder="Consigne (es: Lis et déplace)">
-                </div>
-
-                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
-                    <span class="font-bold text-slate-700 text-sm">LIVELLO DIFFICILE</span>
-                    <input id="con-d" type="text" class="w-full p-2 border rounded text-sm" placeholder="Consigne (es: Remets les lettres en ordre)">
-                </div>
-
-                <div>
-                    <label class="text-xs font-bold text-blue-800 uppercase">Lista Item (separati da ;)</label>
-                    <textarea id="items-list" class="w-full h-32 p-2 border rounded text-sm" placeholder="lit; armoire; fenêtre..."></textarea>
-                </div>
+                <input id="in-unite" type="text" class="w-full p-2 border rounded" placeholder="Unité 1 : La chambre">
+                <input id="con-f" type="text" class="w-full p-2 border rounded text-sm" placeholder="Consigne Facile">
+                <input id="con-d" type="text" class="w-full p-2 border rounded text-sm" placeholder="Consigne Difficile">
+                <textarea id="items-list" class="w-full h-32 p-2 border rounded text-sm" placeholder="lit; armoire; fenêtre..."></textarea>
             </div>
 
             <div class="flex flex-col gap-3">
-                <button onclick="aggiornaAnteprima()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
-                    👁️ GENERA / AGGIORNA ANTEPRIMA
-                </button>
-                <button onclick="downloadResource()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md">
-                    💾 SCARICA HTML INTERATTIVO
-                </button>
+                <button onclick="aggiornaAnteprima()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">👁️ AGGIORNA ANTEPRIMA</button>
+                <button onclick="downloadResource()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">💾 SCARICA HTML INTERATTIVO</button>
             </div>
         </div>
 
         <div class="lg:w-3/5">
             <div id="preview-area" class="bg-white rounded-xl shadow-2xl overflow-hidden min-h-[600px]">
-                <div id="res-unite" class="h-unite text-center md:text-left">UNITÉ</div>
-                <div id="res-activite" class="h-activite text-center md:text-left">ACTIVITÉ</div>
+                <div id="res-unite" class="h-unite">UNITÉ</div>
+                <div id="res-activite" class="h-activite">ACTIVITÉ</div>
                 
                 <div class="p-8">
-                    <div class="flex gap-4 mb-8 justify-center md:justify-start">
+                    <div class="flex gap-4 mb-8">
                         <button id="b-f" class="btn-lvl active" onclick="setLvl('f')">Niveau Facile</button>
                         <button id="b-d" class="btn-lvl" onclick="setLvl('d')">Niveau Difficile</button>
                     </div>
-                    
                     <p id="res-consigne" class="italic text-slate-600 mb-8 text-xl border-l-4 border-blue-200 pl-4"></p>
-                    
-                    <div id="game-area" class="p-6 flex flex-wrap gap-6 justify-center items-start">
-                        <p class="text-slate-300 py-20">Compila i campi e clicca su Genera Anteprima</p>
-                    </div>
+                    <div id="game-area" class="p-6 flex flex-wrap gap-6 justify-center items-start"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImage(event)">
+    <input type="file" id="audioInput" accept="audio/mpeg" class="hidden" onchange="handleAudio(event)">
 
     <script>
         let currentLevel = 'f';
         let itemImages = {};
-        let activeItemForImage = null;
+        let itemAudios = {}; 
+        let activeItem = null;
 
-        function openImagePicker(itemName) {
-            activeItemForImage = itemName;
-            document.getElementById('fileInput').click();
-        }
+        function openImagePicker(name) { activeItem = name; document.getElementById('fileInput').click(); }
+        function openAudioPicker(name) { activeItem = name; document.getElementById('audioInput').click(); }
 
         function handleImage(e) {
-            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = function(event) {
-                itemImages[activeItemForImage] = event.target.result;
-                aggiornaAnteprima();
-            };
-            reader.readAsDataURL(file);
+            reader.onload = (ev) => { itemImages[activeItem] = ev.target.result; aggiornaAnteprima(); };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function handleAudio(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => { itemAudios[activeItem] = ev.target.result; aggiornaAnteprima(); };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function playSound(text) {
+            if (itemAudios[text]) {
+                const audio = new Audio(itemAudios[text]);
+                audio.play();
+            } else {
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'fr-FR';
+                window.speechSynthesis.speak(msg);
+            }
         }
 
         function aggiornaAnteprima() {
@@ -116,26 +107,30 @@
                 area.innerHTML = `<div id="sortable-grid" class="flex flex-wrap gap-4 justify-center">
                     ${items.map(i => `
                         <div class="domino-card shadow-md" data-id="${i}">
-                            <div class="img-placeholder" onclick="openImagePicker('${i}')" title="Carica immagine per ${i}">
-                                ${itemImages[i] ? `<img src="${itemImages[i]}">` : `<span class="text-[10px] text-slate-400">📷 CARICA</span>`}
+                            <div class="img-placeholder" onclick="openImagePicker('${i}')">
+                                ${itemImages[i] ? `<img src="${itemImages[i]}">` : `<span class="text-[10px] text-slate-400">📷 IMG</span>`}
                             </div>
-                            <div class="p-2 text-center font-bold text-xs">${i}</div>
+                            <div class="p-2 flex justify-between items-center bg-white">
+                                <span class="text-xs font-bold">${i}</span>
+                                <div class="flex gap-1">
+                                    <span onclick="openAudioPicker('${i}')" class="text-[10px] bg-slate-100 p-1 rounded">+MP3</span>
+                                    <span onclick="playSound('${i}')" class="audio-btn text-blue-600">🔊</span>
+                                </div>
+                            </div>
                         </div>
                     `).join('')}
                 </div>`;
                 new Sortable(document.getElementById('sortable-grid'), { animation: 150 });
             } else {
-                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Remets les lettres en ordre.";
-                area.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Remets en ordre.";
+                area.innerHTML = `<div class="grid grid-cols-1 gap-4 w-full">
                     ${items.map(i => `
                         <div class="p-4 border rounded-lg bg-slate-50 flex items-center gap-4">
-                            <div class="w-12 h-12 border bg-white rounded overflow-hidden flex-shrink-0">
-                                ${itemImages[i] ? `<img src="${itemImages[i]}" class="w-full h-full object-cover">` : `🖼️`}
+                            <div class="w-12 h-12 bg-white border rounded overflow-hidden" onclick="openImagePicker('${i}')">
+                                ${itemImages[i] ? `<img src="${itemImages[i]}" class="w-full h-full object-cover">` : ``}
                             </div>
-                            <div class="flex-grow">
-                                <input type="text" class="w-full p-1 border-b-2 border-blue-200 outline-none text-center font-mono font-bold uppercase tracking-widest" 
-                                       placeholder="${i.split('').sort(()=>Math.random()-0.5).join('')}">
-                            </div>
+                            <input type="text" class="flex-grow p-1 border-b-2 border-blue-200 outline-none text-center font-bold uppercase" placeholder="${i.split('').sort(()=>Math.random()-0.5).join('')}">
+                            <span onclick="playSound('${i}')" class="audio-btn text-2xl">🔊</span>
                         </div>
                     `).join('')}
                 </div>`;
@@ -143,10 +138,8 @@
         }
 
         function downloadResource() {
-            // Logica di download interattivo simile alla precedente
-            // ... (codice per generare il file HTML autonomo)
-            alert("Preparazione file per il download...");
-            // (Inserire qui la funzione downloadResource completa vista nel messaggio precedente)
+            // Qui inseriremo la funzione download definitiva nel prossimo step
+            alert("Il download includerà anche la logica audio automatica!");
         }
     </script>
 </body>
