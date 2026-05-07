@@ -2,242 +2,160 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Générateur FLE Hachette</title>
+    <title>Générateur FLE Hachette Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        /* Stili ispirati alla struttura Hachette/icPlayer */
-        .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; font-family: sans-serif; }
-        .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; font-family: sans-serif; }
-        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; transition: all 0.2s; }
+        .h-unite { background-color: #1e3a8a; color: white; padding: 12px 20px; font-weight: bold; text-transform: uppercase; }
+        .h-activite { background-color: #f1f5f9; color: #475569; padding: 10px 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
+        .btn-lvl { padding: 6px 20px; border-radius: 999px; border: 2px solid #1e3a8a; color: #1e3a8a; font-weight: bold; transition: 0.2s; }
         .btn-lvl.active { background-color: #1e3a8a; color: white; }
-        .game-canvas { min-height: 400px; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
-        .input-label { font-size: 0.75rem; font-weight: bold; color: #1e3a8a; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; overflow: hidden; width: 120px; text-align: center; background: white; }
-        .domino-top { height: 80px; background: #f8fafc; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #e2e8f0; font-size: 2rem; }
-        .domino-bottom { padding: 5px; font-weight: bold; color: #1e3a8a; font-size: 0.9rem; }
+        .domino-card { border: 2px solid #1e3a8a; border-radius: 8px; width: 130px; background: white; cursor: move; }
+        .img-placeholder { height: 90px; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+        .img-placeholder:hover::after { content: "CHANGER"; position: absolute; background: rgba(0,0,0,0.5); color: white; font-size: 10px; padding: 2px 5px; }
     </style>
 </head>
-<body class="bg-slate-200 p-4 md:p-8">
+<body class="bg-slate-200 p-4">
 
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-        
-        <div class="lg:w-2/5 bg-white p-6 rounded-xl shadow-xl space-y-6 overflow-y-auto max-h-[90vh]">
-            <h2 class="text-2xl font-bold text-blue-900 border-b pb-2 flex items-center gap-2">
-                ⚙️ Configuration
-            </h2>
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-1/3 bg-white p-5 rounded-lg shadow-xl space-y-4 max-h-screen overflow-y-auto">
+            <h2 class="text-xl font-bold text-blue-900 border-b pb-2">Configuration</h2>
             
-            <div class="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
-                <label class="input-label text-indigo-700">1. Incolla testo dell'Unità</label>
-                <textarea id="rawText" class="w-full h-32 p-3 text-sm border rounded focus:ring-2 focus:ring-indigo-400 outline-none" placeholder="Incolla qui il testo grezzo da analizzare..."></textarea>
-                <button onclick="analizzaConAI()" id="btn-ai" class="w-full mt-3 bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2">
-                    ✨ CHIEDI ALL'AI DI COMPILARE I CAMPI
-                </button>
+            <div class="bg-indigo-50 p-3 rounded border border-indigo-200">
+                <textarea id="rawText" class="w-full h-24 p-2 text-sm border rounded" placeholder="Incolla testo unità..."></textarea>
+                <button onclick="analizzaConAI()" id="btn-ai" class="w-full mt-2 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700">✨ COMPILA CON AI</button>
             </div>
 
-            <hr>
+            <div>
+                <label class="block text-xs font-bold text-blue-800">UNITÉ</label>
+                <input id="in-unite" type="text" class="w-full p-2 border rounded text-sm">
+            </div>
 
-            <div class="space-y-4">
-                <div>
-                    <label class="input-label">Unità (Numero e Titolo)</label>
-                    <input id="in-unite" type="text" class="w-full p-2 border rounded focus:border-blue-500" placeholder="es: Unité 1 : La chambre">
+            <div class="grid grid-cols-1 gap-3">
+                <div class="p-3 bg-blue-50 rounded">
+                    <label class="block text-xs font-bold">CONSIGNE FACILE</label>
+                    <input id="con-f" type="text" class="w-full p-2 border rounded text-sm mb-2">
+                    <select id="type-f" class="w-full p-2 border rounded text-xs"><option value="drag">Drag & Drop</option></select>
                 </div>
-
-                <div class="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
-                    <span class="font-bold text-blue-800 text-sm">NIVEAU FACILE</span>
-                    <div>
-                        <label class="input-label">Consigne</label>
-                        <input id="con-f" type="text" class="w-full p-2 border rounded text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="input-label">Tipologia</label>
-                            <select id="type-f" class="w-full p-2 border rounded text-sm bg-white">
-                                <option value="drag">Drag & Drop</option>
-                                <option value="memory">Memory</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
-                    <span class="font-bold text-slate-700 text-sm">NIVEAU DIFFICILE</span>
-                    <div>
-                        <label class="input-label">Consigne</label>
-                        <input id="con-d" type="text" class="w-full p-2 border rounded text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="input-label">Tipologia</label>
-                            <select id="type-d" class="w-full p-2 border rounded text-sm bg-white">
-                                <option value="anagramme">Anagramme</option>
-                                <option value="croises">Mots Croisés</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="input-label">Lista Item (separati da ;)</label>
-                    <textarea id="items-list" class="w-full h-24 p-2 border rounded text-sm" placeholder="item1; item2; item3..."></textarea>
+                <div class="p-3 bg-slate-50 rounded">
+                    <label class="block text-xs font-bold">CONSIGNE DIFFICILE</label>
+                    <input id="con-d" type="text" class="text-sm w-full p-2 border rounded mb-2">
+                    <select id="type-d" class="w-full p-2 border rounded text-xs"><option value="anagramme">Anagramme</option></select>
                 </div>
             </div>
 
-            <button onclick="aggiornaAnteprima()" class="w-full bg-blue-700 text-white py-4 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition transform active:scale-95">
-                👁️ AGGIORNA ANTEPRIMA
-            </button>
+            <div>
+                <label class="block text-xs font-bold">ITEMS (separati da ;)</label>
+                <textarea id="items-list" oninput="aggiornaAnteprima()" class="w-full h-20 p-2 border rounded text-sm"></textarea>
+            </div>
+
+            <button onclick="downloadResource()" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition">💾 SCARICA RISORSA (.HTML)</button>
         </div>
 
-        <div class="lg:w-3/5">
-            <div id="preview-card" class="bg-white rounded-xl shadow-2xl overflow-hidden min-h-[700px] flex flex-col">
+        <div class="lg:w-2/3">
+            <div id="capture-area" class="bg-white rounded-lg shadow-2xl overflow-hidden min-h-[600px]">
                 <div id="res-unite" class="h-unite">UNITÉ</div>
                 <div id="res-activite" class="h-activite">ACTIVITÉ</div>
                 
-                <div class="p-8 flex-grow">
-                    <div class="flex gap-4 mb-8">
+                <div class="p-6">
+                    <div class="flex gap-3 mb-6">
                         <button id="b-f" class="btn-lvl active" onclick="setLvl('f')">Niveau Facile</button>
                         <button id="b-d" class="btn-lvl" onclick="setLvl('d')">Niveau Difficile</button>
                     </div>
-                    
-                    <p id="res-consigne" class="italic text-slate-600 mb-8 text-xl border-l-4 border-blue-200 pl-4"></p>
-                    
-                    <div id="game-area" class="game-canvas p-6 flex flex-wrap gap-6 justify-center items-start">
-                        </div>
-                </div>
-
-                <div class="p-4 bg-slate-50 border-t flex justify-end">
-                    <button class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 transition">
-                        💾 SCARICA HTML FINALE
-                    </button>
+                    <p id="res-consigne" class="italic text-slate-600 mb-6 text-lg border-l-4 border-blue-200 pl-4"></p>
+                    <div id="game-area" class="p-4 flex flex-wrap gap-4 justify-center items-start"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImage(event)">
+
     <script>
-        let currentData = null;
         let currentLevel = 'f';
+        let itemImages = {}; // Qui salviamo le immagini caricate (base64)
+        let activeItemForImage = null;
 
-        // 1. Chiamata all'AI per popolare i campi
         async function analizzaConAI() {
-            const btn = document.getElementById('btn-ai');
             const raw = document.getElementById('rawText').value;
-            if(!raw) return alert("Per favore, incolla prima il testo dell'unità.");
-
-            btn.innerText = "⏳ Analisi in corso...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/parse_text', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({testo: raw})
-                });
-                const data = await response.json();
-
-                // Popolamento campi
-                document.getElementById('in-unite').value = data.unite || "";
-                document.getElementById('con-f').value = data.consigne_f || "";
-                document.getElementById('con-d').value = data.consigne_d || "";
-                document.getElementById('items-list').value = data.items || "";
-
-                aggiornaAnteprima();
-            } catch (e) {
-                alert("Errore durante l'analisi. Riprova.");
-            } finally {
-                btn.innerText = "✨ CHIEDI ALL'AI DI COMPILARE I CAMPI";
-                btn.disabled = false;
-            }
+            const btn = document.getElementById('btn-ai');
+            btn.innerText = "⏳...";
+            const r = await fetch('/parse_text', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({testo:raw})});
+            const d = await r.json();
+            document.getElementById('in-unite').value = d.unite;
+            document.getElementById('con-f').value = d.consigne_f;
+            document.getElementById('con-d').value = d.consigne_d;
+            document.getElementById('items-list').value = d.items;
+            btn.innerText = "✨ COMPILA CON AI";
+            aggiornaAnteprima();
         }
 
-        // 2. Aggiorna l'anteprima grafica basandosi sui campi compilati
+        function openImagePicker(itemName) {
+            activeItemForImage = itemName;
+            document.getElementById('fileInput').click();
+        }
+
+        function handleImage(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                itemImages[activeItemForImage] = event.target.result;
+                aggiornaAnteprima();
+            };
+            reader.readAsDataURL(file);
+        }
+
         function aggiornaAnteprima() {
             document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
-            document.getElementById('res-activite').innerText = "Activité"; 
+            document.getElementById('res-activite').innerText = "Le Domino";
             setLvl(currentLevel);
         }
 
-        // 3. Gestione dello switch tra i livelli nell'anteprima
         function setLvl(l) {
-    currentLevel = l;
-    document.getElementById('b-f').classList.toggle('active', l === 'f');
-    document.getElementById('b-d').classList.toggle('active', l === 'd');
-    
-    const rawItems = document.getElementById('items-list').value;
-    const items = rawItems.split(';').map(i => i.trim()).filter(i => i !== "");
-    const area = document.getElementById('game-area');
-    
-    if(l === 'f') {
-        document.getElementById('res-consigne').innerText = document.getElementById('con-f').value || "Lis et déplace.";
-        // Mescoliamo gli items per il gioco
-        const shuffled = [...items].sort(() => Math.random() - 0.5);
-        
-        area.innerHTML = `
-            <div id="sortable-cards" class="flex flex-wrap gap-4 justify-center">
-                ${shuffled.map(i => `
-                    <div class="domino-card shadow-md cursor-move" data-id="${i}">
-                        <div class="domino-top">🖼️</div>
-                        <div class="domino-bottom">${i}</div>
+            currentLevel = l;
+            document.getElementById('b-f').classList.toggle('active', l === 'f');
+            document.getElementById('b-d').classList.toggle('active', l === 'd');
+            const items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i!=="");
+            const area = document.getElementById('game-area');
+            
+            if(l === 'f') {
+                document.getElementById('res-consigne').innerText = document.getElementById('con-f').value;
+                area.innerHTML = `<div id="sortable-grid" class="flex flex-wrap gap-4 justify-center">
+                    ${items.map(i => `
+                        <div class="domino-card" data-id="${i}">
+                            <div class="img-placeholder" onclick="openImagePicker('${i}')">
+                                ${itemImages[i] ? `<img src="${itemImages[i]}">` : `<span class="text-xs text-slate-400">📷 Opz. A/B</span>`}
+                            </div>
+                            <div class="p-2 text-center font-bold text-xs border-t">${i}</div>
+                        </div>
+                    `).join('')}
+                </div>`;
+                new Sortable(document.getElementById('sortable-grid'), { animation: 150 });
+            } else {
+                document.getElementById('res-consigne').innerText = document.getElementById('con-d').value;
+                area.innerHTML = items.map(i => `
+                    <div class="p-3 border rounded flex items-center gap-3 bg-white w-full md:w-5/12">
+                        <div class="w-12 h-12 border rounded overflow-hidden">
+                            ${itemImages[i] ? `<img src="${itemImages[i]}" class="w-full h-full object-cover">` : `🖼️`}
+                        </div>
+                        <input type="text" class="flex-grow p-1 border-b-2 border-blue-200 outline-none text-center font-bold uppercase" 
+                               placeholder="${i.split('').sort(()=>Math.random()-0.5).join('')}">
                     </div>
-                `).join('')}
-            </div>
-            <button onclick="checkOrder()" class="mt-8 bg-orange-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">VÉRIFIER</button>
-        `;
+                `).join('');
+            }
+        }
 
-        // Attiviamo il trascinamento reale
-        new Sortable(document.getElementById('sortable-cards'), {
-            animation: 150,
-            ghostClass: 'opacity-20'
-        });
-
-    } else {
-        document.getElementById('res-consigne').innerText = document.getElementById('con-d').value || "Remets en ordre.";
-        area.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                ${items.map((i, index) => {
-                    const scrambled = i.split('').sort(() => Math.random() - 0.5).join('');
-                    return `
-                    <div class="p-4 border-2 rounded-lg bg-slate-50 flex items-center gap-4">
-                        <div class="text-2xl">🖼️</div>
-                        <input type="text" id="ans-${index}" data-correct="${i}" 
-                               class="w-full p-2 border-b-2 border-blue-300 outline-none focus:border-blue-600 font-bold uppercase tracking-widest text-center"
-                               placeholder="${scrambled.toUpperCase()}">
-                        <button onclick="checkWord(${index})" class="text-blue-500 font-bold">OK</button>
-                    </div>`;
-                }).join('')}
-            </div>
-            <button onclick="checkAllWords()" class="mt-8 bg-orange-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">VÉRIFIER TOUT</button>
-        `;
-    }
-}
-
-// Funzioni di controllo (Feedback)
-function checkOrder() {
-    const cards = document.querySelectorAll('#sortable-cards .domino-card');
-    const items = document.getElementById('items-list').value.split(';').map(i => i.trim());
-    let correct = true;
-    
-    cards.forEach((card, index) => {
-        if(card.getAttribute('data-id') !== items[index]) correct = false;
-    });
-
-    if(correct) {
-        confetti();
-        alert("Bravo ! C'est correct !");
-    } else {
-        alert("Essaie encore ! L'ordre n'est pas bon.");
-    }
-}
-
-function checkWord(idx) {
-    const input = document.getElementById(`ans-${idx}`);
-    if(input.value.toLowerCase().trim() === input.getAttribute('data-correct').toLowerCase().trim()) {
-        input.classList.add('bg-green-100', 'border-green-500');
-    } else {
-        input.classList.add('bg-red-100', 'border-red-500');
-    }
-}
+        function downloadResource() {
+            const content = document.getElementById('capture-area').innerHTML;
+            const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script><style>.h-unite{background:#1e3a8a;color:white;padding:12px;font-weight:bold;text-transform:uppercase}.h-activite{background:#f1f5f9;color:#475569;padding:10px;font-weight:bold;border-bottom:2px solid #e2e8f0}.domino-card{border:2px solid #1e3a8a;border-radius:8px;width:130px;background:white;display:inline-block;margin:5px}<\/style><\/head><body>${content}<\/body><\/html>`;
+            const blob = new Blob([fullHtml], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'exercice_fle.html';
+            a.click();
+        }
     </script>
 </body>
 </html>
