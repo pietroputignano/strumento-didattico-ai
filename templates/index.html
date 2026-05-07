@@ -196,13 +196,36 @@
             r.readAsDataURL(e.target.files[0]);
         }
         function playAud(type) {
+            // Se il tipo è 'consigne', cerchiamo la chiave specifica (con-f o con-d)
             const key = type === 'consigne' ? (curLvl === 'f' ? 'con-f' : 'con-d') : activeKey;
-            if(dbAud[key]) { new Audio(dbAud[key]).play(); }
-            else { 
-                const text = type === 'consigne' ? document.getElementById(key).value : items[curStep];
-                const msg = new SpeechSynthesisUtterance(text);
-                msg.lang = 'fr-FR'; window.speechSynthesis.speak(msg);
+            
+            console.log("Tentativo riproduzione per chiave:", key); // Debug in console
+
+            if (dbAud[key]) {
+                // Se esiste l'MP3 caricato, lo riproduciamo
+                const audio = new Audio(dbAud[key]);
+                audio.play().catch(e => console.error("Errore riproduzione MP3:", e));
+            } else { 
+                // Altrimenti usiamo la sintesi vocale
+                const textSource = type === 'consigne' ? document.getElementById(key).value : items[curStep];
+                const msg = new SpeechSynthesisUtterance(textSource);
+                msg.lang = 'fr-FR'; 
+                window.speechSynthesis.speak(msg);
             }
+        }
+
+        // Funzione per salvare l'audio caricato
+        function saveAud(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => { 
+                dbAud[activeKey] = ev.target.result; 
+                console.log("Audio salvato per:", activeKey); // Conferma caricamento
+                alert("Audio caricato correttamente per: " + activeKey);
+            };
+            reader.readAsDataURL(file);
         }
     </script>
 </body>
