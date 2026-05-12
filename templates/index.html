@@ -135,6 +135,20 @@
         </div>
 
         <div class="lg:w-2/3 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
+            
+            <div id="start-screen" class="absolute inset-0 bg-blue-600 flex flex-col items-center justify-center z-50 text-white">
+                <h2 id="start-unite" class="text-3xl font-bold mb-2 tracking-widest opacity-80"></h2>
+                <h1 id="start-titre" class="text-5xl font-black mb-12 uppercase text-center px-4 drop-shadow-lg"></h1>
+                <button onclick="startGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-12 rounded-full text-2xl shadow-xl transform transition hover:scale-105">COMMENCER</button>
+            </div>
+
+            <div id="end-screen" class="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center z-50 hidden">
+                <div class="text-8xl mb-6">🏆</div>
+                <h1 class="text-4xl font-black text-blue-900 mb-4 uppercase">Félicitations !</h1>
+                <p id="end-score" class="text-xl text-gray-700 mb-10 font-bold"></p>
+                <button onclick="startGame()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105">REJOUER</button>
+            </div>
+
             <div id="res-unite" class="h-unite-bar">UNITÉ</div>
             <div class="px-6 py-4 flex justify-between items-center border-b">
                 <h1 id="res-titre" class="h-titre text-2xl md:text-3xl uppercase">TITRE</h1>
@@ -170,13 +184,14 @@
 
         let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'facile', status = [], activeKey = "";
         let mappedZones = [];
-        let cwData = []; // {x, y, char, num}
-        let cwClues = []; // {num, dir, word, clue}
+        let cwData = []; 
+        let cwClues = []; 
 
         window.onload = () => {
             document.querySelectorAll('.type-sel').forEach(s => { s.innerHTML = types.map(t=>`<option value="${t.id}">${t.n}</option>`).join(''); });
             toggleToolBtns('f'); toggleToolBtns('d');
             buildCWGrid();
+            initGame();
         };
 
         function toggleToolBtns(l) {
@@ -225,7 +240,6 @@
             document.getElementById('cw-builder-grid').innerHTML = html;
         }
 
-        // Funzione Cuore per rilevare parole e inserire Definizioni
         function findCWWords() {
             let grid = [];
             for(let y=0; y<12; y++) {
@@ -234,10 +248,7 @@
                     grid[y][x] = document.querySelector(`.cw-cell[data-x="${x}"][data-y="${y}"]`).value.trim().toUpperCase();
                 }
             }
-
             let words = []; let counter = 1;
-
-            // Scansione Orizzontale
             for(let y=0; y<12; y++) {
                 let currWord = ""; let startX = -1;
                 for(let x=0; x<=12; x++) {
@@ -245,7 +256,6 @@
                     else { if(currWord.length > 1) words.push({ word: currWord, x: startX, y: y, dir: 'h' }); currWord = ""; }
                 }
             }
-            // Scansione Verticale
             for(let x=0; x<12; x++) {
                 let currWord = ""; let startY = -1;
                 for(let y=0; y<=12; y++) {
@@ -253,18 +263,13 @@
                     else { if(currWord.length > 1) words.push({ word: currWord, x: x, y: startY, dir: 'v' }); currWord = ""; }
                 }
             }
-
-            if(words.length === 0) { alert("Nessuna parola trovata. Assicurati che le parole abbiano almeno 2 lettere incrociate."); return; }
-
-            // Assegna numeri alle caselle iniziali
+            if(words.length === 0) { alert("Nessuna parola trovata."); return; }
             let starts = {};
             words.forEach(w => {
                 let key = `${w.x}-${w.y}`;
                 if(!starts[key]) starts[key] = counter++;
                 w.num = starts[key];
             });
-
-            // Mostra i numeri sulla griglia visuale
             document.querySelectorAll('.cw-number').forEach(e => e.remove());
             Object.keys(starts).forEach(key => {
                 let [x,y] = key.split('-');
@@ -272,31 +277,26 @@
                 let span = document.createElement('span'); span.className = 'cw-number'; span.innerText = starts[key];
                 cellWrap.appendChild(span);
             });
-
-            // Crea campi per le definizioni
-            let cluesHtml = `<h4 class="font-bold text-blue-900 border-b pb-2 mb-3">Definizioni per le parole trovate</h4><div class="grid grid-cols-2 gap-4">`;
+            let cluesHtml = `<h4 class="font-bold text-blue-900 border-b pb-2 mb-3">Definizioni</h4><div class="grid grid-cols-2 gap-4">`;
             words.sort((a,b) => a.num - b.num).forEach(w => {
                 let label = w.dir === 'h' ? 'Orizzontale' : 'Verticale';
                 let prevClue = cwClues.find(c => c.word === w.word && c.dir === w.dir)?.clue || "";
                 cluesHtml += `<div><label class="text-xs font-bold text-gray-700 block">${w.num}. ${label} (${w.word})</label>
-                    <input type="text" class="cw-clue-input w-full border border-gray-300 rounded p-2 text-xs focus:border-blue-500" data-word="${w.word}" data-num="${w.num}" data-dir="${w.dir}" value="${prevClue}" placeholder="Es: Si usa per scrivere..."></div>`;
+                    <input type="text" class="cw-clue-input w-full border border-gray-300 rounded p-2 text-xs" data-word="${w.word}" data-num="${w.num}" data-dir="${w.dir}" value="${prevClue}"></div>`;
             });
             cluesHtml += `</div>`;
-            
             const cont = document.getElementById('cw-clues-container');
             cont.innerHTML = cluesHtml; cont.classList.remove('hidden');
         }
 
         function closeCWBuilder() {
             cwData = []; cwClues = [];
-            // Salva Caselle e Numerini
             document.querySelectorAll('.cw-cell').forEach(inp => {
                 if(inp.value.trim() !== '') {
                     let numSpan = inp.parentElement.querySelector('.cw-number');
                     cwData.push({ x: parseInt(inp.dataset.x), y: parseInt(inp.dataset.y), char: inp.value.toUpperCase(), num: numSpan ? parseInt(numSpan.innerText) : null });
                 }
             });
-            // Salva Definizioni
             document.querySelectorAll('.cw-clue-input').forEach(inp => {
                 cwClues.push({ num: parseInt(inp.dataset.num), dir: inp.dataset.dir, word: inp.dataset.word, clue: inp.value || inp.dataset.word });
             });
@@ -304,14 +304,38 @@
             initGame();
         }
 
-        /* --- GAME LOGIC --- */
+        /* --- GAME LOGIC CON START/END SCREEN --- */
         function initGame() {
             items = document.getElementById('items-list').value.split(';').map(i=>i.trim()).filter(i=>i);
             document.getElementById('res-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
             document.getElementById('res-titre').innerText = document.getElementById('in-titre').value || "ACTIVITÉ";
-            status = new Array(items.length).fill('pending');
             toggleToolBtns('f'); toggleToolBtns('d');
+            showStartScreen();
+        }
+
+        function showStartScreen() {
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('start-unite').innerText = document.getElementById('in-unite').value || "UNITÉ";
+            document.getElementById('start-titre').innerText = document.getElementById('in-titre').value || "ACTIVITÉ";
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            status = new Array(items.length).fill('pending');
             loadStep(0);
+        }
+
+        function showEndScreen() {
+            document.getElementById('end-screen').classList.remove('hidden');
+            const type = curLvl === 'facile' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
+            let errs = 0;
+            if (type !== 'crossword') {
+                errs = status.filter(s => s === 'error').length;
+            }
+            let msg = errs === 0 ? "Sans-faute ! Excellent !" : `Tu as fait ${errs} erreur(s).`;
+            document.getElementById('end-score').innerText = msg;
         }
 
         function loadStep(idx) {
@@ -326,8 +350,6 @@
             
             if(type === 'crossword') {
                 if(cwData.length === 0) { stage.innerHTML = "<p class='text-gray-400'>Usa il Costruttore Cruciverba (🧩) per creare la griglia e le definizioni.</p>"; return; }
-                
-                // Disegna la griglia di gioco e le definizioni
                 let gridHtml = '<div class="grid gap-1 p-6 bg-blue-50 rounded-xl border-2 border-blue-200" style="grid-template-columns: repeat(12, 40px);">';
                 for(let y=0; y<12; y++) {
                     for(let x=0; x<12; x++) {
@@ -339,13 +361,11 @@
                 gridHtml += '</div>';
 
                 let cluesHtml = '<div class="w-full max-w-2xl bg-white border rounded-xl p-4 shadow mt-6"><h3 class="font-bold text-blue-900 border-b pb-2 mb-2">Définitions</h3><div class="flex flex-wrap gap-4 text-sm text-gray-700">';
-                cwClues.forEach(c => {
-                    cluesHtml += `<div class="w-[45%]"><b>${c.num}. ${c.dir === 'h' ? 'Horizontal' : 'Vertical'} :</b> ${c.clue}</div>`;
-                });
+                cwClues.forEach(c => { cluesHtml += `<div class="w-[45%]"><b>${c.num}. ${c.dir === 'h' ? 'Horizontal' : 'Vertical'} :</b> ${c.clue}</div>`; });
                 cluesHtml += '</div></div>';
 
                 stage.innerHTML = `<div class="flex flex-col items-center w-full">${gridHtml}${cluesHtml}</div>`;
-                document.getElementById('nav-step').innerHTML = ''; // Niente steps nel cruciverba
+                document.getElementById('nav-step').innerHTML = '';
                 return;
             }
 
@@ -384,14 +404,17 @@
 
         function checkCrossword() {
             let allCorrect = true;
+            let filledCount = 0;
             let inputs = document.querySelectorAll('.cw-play-cell');
             inputs.forEach(inp => {
                 if(inp.value.toUpperCase() !== inp.dataset.ans) { allCorrect = false; inp.classList.remove('correct'); }
                 else { inp.classList.add('correct'); }
+                if(inp.value.trim() !== '') filledCount++;
             });
-            if(allCorrect && inputs.length > 0) {
+            if(allCorrect && filledCount === inputs.length && inputs.length > 0) {
                 confetti();
                 if(dbAud['global_ok']) new Audio(dbAud['global_ok']).play();
+                setTimeout(() => showEndScreen(), 1500);
             }
         }
 
@@ -399,7 +422,7 @@
             const target = document.getElementById('target');
             const pool = document.getElementById('pool');
             if(!target || !pool) return;
-            new Sortable(pool, { group: 'game', sort: false });
+            new Sortable(pool, { group: 'game', sort: false, animation: 150 });
             new Sortable(target, { 
                 group: 'game', animation: 150,
                 onAdd: (e) => {
@@ -426,7 +449,13 @@
             if(correct) { 
                 confetti(); status[curStep]='completed'; 
                 if(dbAud['global_ok']) new Audio(dbAud['global_ok']).play();
-                setTimeout(()=>loadStep(curStep<items.length-1?curStep+1:0), 1200); 
+                setTimeout(() => {
+                    if (curStep < items.length - 1) {
+                        loadStep(curStep + 1);
+                    } else {
+                        showEndScreen();
+                    }
+                }, 1500); 
             } else {
                 status[curStep]='error';
                 if(dbAud['global_ko']) new Audio(dbAud['global_ko']).play();
@@ -543,6 +572,17 @@
 
             playerHTML += `<body class="p-2 md:p-4 flex justify-center items-center min-h-screen">
     <div class="w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
+        <div id="start-screen" class="absolute inset-0 bg-blue-600 flex flex-col items-center justify-center z-50 text-white">
+            <h2 id="start-unite" class="text-3xl font-bold mb-2 tracking-widest opacity-80"></h2>
+            <h1 id="start-titre" class="text-5xl font-black mb-12 uppercase text-center px-4 drop-shadow-lg"></h1>
+            <button onclick="startGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-12 rounded-full text-2xl shadow-xl transform transition hover:scale-105">COMMENCER</button>
+        </div>
+        <div id="end-screen" class="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center z-50 hidden">
+            <div class="text-8xl mb-6">🏆</div>
+            <h1 class="text-4xl font-black text-blue-900 mb-4 uppercase">Félicitations !</h1>
+            <p id="end-score" class="text-xl text-gray-700 mb-10 font-bold"></p>
+            <button onclick="startGame()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105">REJOUER</button>
+        </div>
         <div id="res-unite" class="h-unite-bar"></div>
         <div class="px-6 py-4 flex justify-between items-center border-b">
             <h1 id="res-titre" class="h-titre text-2xl md:text-3xl uppercase"></h1>
@@ -565,11 +605,26 @@
             playerHTML += `<script>
         let curStep = 0, curLvl = 'facile', status = [];
         window.onload = () => {
+            document.getElementById('start-unite').innerText = GAME_CONFIG.unite;
+            document.getElementById('start-titre').innerText = GAME_CONFIG.titre;
             document.getElementById('res-unite').innerText = GAME_CONFIG.unite;
             document.getElementById('res-titre').innerText = GAME_CONFIG.titre;
+        };
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
             status = new Array(GAME_CONFIG.items.length).fill('pending');
             loadStep(0);
-        };
+        }
+
+        function showEndScreen() {
+            document.getElementById('end-screen').classList.remove('hidden');
+            const type = GAME_CONFIG.levels[curLvl].type;
+            let errs = 0;
+            if (type !== 'crossword') errs = status.filter(s => s === 'error').length;
+            document.getElementById('end-score').innerText = errs === 0 ? "Sans-faute ! Excellent !" : "Tu as fait " + errs + " erreur(s).";
+        }
 
         function loadStep(idx) {
             curStep = idx; renderNav();
@@ -642,14 +697,17 @@
 
         function checkCrossword() {
             let allCorrect = true;
+            let filledCount = 0;
             let inputs = document.querySelectorAll('.cw-play-cell');
             inputs.forEach(inp => {
                 if(inp.value.toUpperCase() !== inp.dataset.ans) { allCorrect = false; inp.classList.remove('correct'); }
                 else { inp.classList.add('correct'); }
+                if(inp.value.trim() !== '') filledCount++;
             });
-            if(allCorrect && inputs.length > 0) {
+            if(allCorrect && filledCount === inputs.length && inputs.length > 0) {
                 confetti();
                 if(GAME_CONFIG.audio['global_ok']) new Audio(GAME_CONFIG.audio['global_ok']).play();
+                setTimeout(() => showEndScreen(), 1500);
             }
         }
 
@@ -690,7 +748,13 @@
             if(correct) { 
                 confetti(); status[curStep]='completed'; 
                 if(GAME_CONFIG.audio['global_ok']) new Audio(GAME_CONFIG.audio['global_ok']).play();
-                setTimeout(()=>loadStep(curStep < GAME_CONFIG.items.length-1 ? curStep+1 : 0), 1500); 
+                setTimeout(() => {
+                    if (curStep < GAME_CONFIG.items.length - 1) {
+                        loadStep(curStep + 1);
+                    } else {
+                        showEndScreen();
+                    }
+                }, 1500); 
             } else {
                 status[curStep]='error';
                 if(GAME_CONFIG.audio['global_ko']) new Audio(GAME_CONFIG.audio['global_ko']).play();
@@ -699,16 +763,18 @@
         }
 
         function renderNav() { 
-            const type = curLvl === 'facile' ? GAME_CONFIG.levels.facile.type : GAME_CONFIG.levels.difficile.type;
+            const type = GAME_CONFIG.levels[curLvl].type;
             if(type === 'crossword') { document.getElementById('nav-step').innerHTML = ''; return; }
             document.getElementById('nav-step').innerHTML = GAME_CONFIG.items.map((_, i) => '<div class="step-pill ' + (i===curStep?'active ':'') + status[i] + '" onclick="loadStep(' + i + ')">' + (i+1) + '</div>').join(''); 
         }
+
         function switchLvl(l) { 
             curLvl = l; 
             document.getElementById('btn-f-view').className = l==='facile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900';
             document.getElementById('btn-d-view').className = l==='difficile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 text-blue-900';
-            loadStep(0);
+            startGame();
         }
+
         function playConsigne() {
             const key = curLvl === 'facile' ? 'aud-f' : 'aud-d';
             if(GAME_CONFIG.audio[key]) { new Audio(GAME_CONFIG.audio[key]).play(); } 
