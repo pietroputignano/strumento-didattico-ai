@@ -276,37 +276,239 @@
             else { const m=new SpeechSynthesisUtterance(document.getElementById(`con-${curLvl}`).value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
         }
 
-        /* --- ZIP EXPORT --- */
+       /* --- MOTORE DI ESPORTAZIONE ZIP (PLAYER STANDALONE) --- */
         async function exportToZIP() {
-            if(items.length === 0) { alert("Dati mancanti!"); return; }
+            if(items.length === 0) {
+                alert("Attenzione: Inserisci dei dati prima di esportare!");
+                return;
+            }
+
             const zip = new JSZip();
+
+            // Costruisci l'albero delle directory
             const assetsFolder = zip.folder("assets");
             const jsFolder = zip.folder("js");
 
-            function dataURLtoBlob(url) {
-                let arr = url.split(','), mime = arr[0].match(/:(.*?);/)[1];
+            // Utility per decodificare base64 in File/Blob fisico
+            function dataURLtoBlob(dataurl) {
+                let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
                 let bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
                 while(n--){ u8arr[n] = bstr.charCodeAt(n); }
                 return new Blob([u8arr], {type:mime});
             }
 
+            // 1. Esporta le Immagini in /assets
             let expImg = {};
             for(let k in dbImg) {
                 if(!dbImg[k]) continue;
                 let ext = dbImg[k].match(/data:image\/(.*);base64/)[1];
-                let name = `${k.replace(/[^a-z]/gi,'_')}.${ext}`;
+                let name = `${k.replace(/[^a-z0-9]/gi,'_')}.${ext}`;
                 assetsFolder.file(name, dataURLtoBlob(dbImg[k]));
                 expImg[k] = `assets/${name}`;
             }
 
-            const gameConfig = { unite: document.getElementById('in-unite').value, titre: document.getElementById('in-titre').value, items, mappedZones, images: expImg, audio: {}, levels: { facile: { type: document.getElementById('type-f').value, consigne: document.getElementById('con-f').value }, difficile: { type: document.getElementById('type-d').value, consigne: document.getElementById('con-d').value } } };
+            // 2. Esporta gli Audio in /assets
+            let expAud = {};
+            for(let k in dbAud) {
+                if(!dbAud[k]) continue;
+                let ext = dbAud[k].includes('mpeg') ? 'mp3' : 'wav';
+                let name = `${k.replace(/[^a-z0-9]/gi,'_')}.${ext}`;
+                assetsFolder.file(name, dataURLtoBlob(dbAud[k]));
+                expAud[k] = `assets/${name}`;
+            }
+
+            // 3. Genera il file di Configurazione (Il cervello del player)
+            const gameConfig = {
+                unite: document.getElementById('in-unite').value || "UNITÉ",
+                titre: document.getElementById('in-titre').value || "ACTIVITÉ",
+                items: items,
+                mappedZones: mappedZones,
+                images: expImg,
+                audio: expAud,
+                levels: {
+                    facile: { type: document.getElementById('type-f').value, consigne: document.getElementById('con-f').value },
+                    difficile: { type: document.getElementById('type-d').value, consigne: document.getElementById('con-d').value }
+                }
+            };
             jsFolder.file("config.js", `const GAME_CONFIG = ${JSON.stringify(gameConfig, null, 2)};`);
 
-            const playerHTML = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>bSmart Player</title><script src="https://cdn.tailwindcss.com"><\/script><script src="js/config.js"><\/script><style>:root { --hfle-blue: #0169B3; } body { font-family: sans-serif; background: #f1f5f9; }</style></head><body><div class="p-10 text-center font-bold text-blue-900">\${GAME_CONFIG.unite} - \${GAME_CONFIG.titre}<p class="font-normal text-gray-500 mt-4">Logica del Player caricata da config.js</p></div><\/body></html>`;
+            // 4. Genera il Player Standalone (index.html per lo studente)
+            const playerHTML = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bSmart | Jeux interactifs</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="js/config.js"><\/script>
+    <style>
+        :root { --hfle-blue: #0169B3; --hfle-orange: #EFA92C; --hfle-success: #8dc549; --hfle-error: #d84157; }
+        body { font-family: 'Source Sans Pro', sans-serif; background-color: #f1f5f9; }
+        .h-titre { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--hfle-blue); text-shadow: rgb(255, 255, 255) 4px 0px 0px, rgb(255, 255, 255) 3.8px 1px 0px; }
+        .h-unite-bar { background-color: var(--hfle-blue); color: white; padding: 12px; text-transform: uppercase; font-weight: 700; text-align: center; }
+        .step-pill { width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
+        .step-pill.completed { background-color: var(--hfle-success); }
+        .domino-tile { border: 3px solid var(--hfle-blue); border-radius: 12px; display: flex; background: white; height: 85px; width: 190px; cursor: grab; overflow: hidden; flex-shrink: 0; }
+        .tile-img { width: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border-right: 2px dashed var(--hfle-blue); position: relative; }
+        .tile-img img { max-height: 85%; max-width: 85%; object-fit: contain; }
+        .tile-text { width: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; text-align: center; padding: 4px; }
+        .drop-target { width: 190px; height: 85px; border: 3px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: bold; }
+        .letter-tile { width: 40px; height: 40px; background: var(--hfle-orange); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: grab; }
+        .rebus-gap { display: inline-block; width: 60px; height: 40px; border: 2px dashed var(--hfle-blue); border-radius: 8px; vertical-align: middle; margin: 0 5px; background: #f8fafc; }
+    </style>
+</head>
+<body class="p-2 md:p-4 flex justify-center items-center min-h-screen">
+    <div class="w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
+        <div id="res-unite" class="h-unite-bar"></div>
+        <div class="px-6 py-4 flex justify-between items-center border-b">
+            <h1 id="res-titre" class="h-titre text-2xl md:text-3xl uppercase"></h1>
+            <div class="flex gap-2">
+                <button id="btn-f-view" onclick="switchLvl('facile')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md transition">FACILE</button>
+                <button id="btn-d-view" onclick="switchLvl('difficile')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900 transition">DIFFICILE</button>
+            </div>
+        </div>
+        <div class="p-8 flex-grow flex flex-col items-center">
+            <div class="flex items-center gap-3 mb-10 bg-slate-50 px-8 py-3 rounded-full border border-slate-200 shadow-sm">
+                <p id="res-consigne" class="italic text-gray-700 font-bold text-lg"></p>
+                <button onclick="playConsigne()" class="text-blue-600 text-2xl hover:scale-125 transition">🔊</button>
+            </div>
+            <div id="main-content" class="w-full flex flex-col items-center gap-10"></div>
+            <div id="pool" class="mt-auto p-6 w-full flex flex-wrap justify-center gap-6 border-t border-dashed border-slate-200"></div>
+        </div>
+        <div id="nav-step" class="p-5 bg-slate-50 border-t flex justify-center gap-3 flex-wrap"></div>
+    </div>
+
+    <script>
+        let curStep = 0, curLvl = 'facile', status = [];
+        
+        window.onload = () => {
+            document.title = "bSmart | " + GAME_CONFIG.titre;
+            document.getElementById('res-unite').innerText = GAME_CONFIG.unite;
+            document.getElementById('res-titre').innerText = GAME_CONFIG.titre;
+            status = new Array(GAME_CONFIG.items.length).fill('pending');
+            loadStep(0);
+        };
+
+        function loadStep(idx) {
+            if(GAME_CONFIG.items.length === 0) return;
+            curStep = idx; renderNav();
+            
+            const stage = document.getElementById('main-content');
+            const pool = document.getElementById('pool');
+            const word = GAME_CONFIG.items[idx];
+            const lvlConfig = GAME_CONFIG.levels[curLvl];
+            
+            document.getElementById('res-consigne').innerText = lvlConfig.consigne;
+
+            if(lvlConfig.type === 'dressing') {
+                const bgSrc = GAME_CONFIG.images['mapper_bg'];
+                const bg = bgSrc ? \`<img src="\${bgSrc}" class="max-h-full">\` : \`<div class="p-10 text-gray-400">Nessuno Sfondo</div>\`;
+                const zone = GAME_CONFIG.mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
+                const targetHtml = zone ? \`<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:\${zone.left}; top:\${zone.top}; width:\${zone.width}; height:\${zone.height}"></div>\` : '';
+                
+                stage.innerHTML = \`<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">\${bg}\${targetHtml}</div>\`;
+                pool.innerHTML = GAME_CONFIG.items.map(it => \`<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center transition-all" data-word="\${it}">\${GAME_CONFIG.images[it]?\`<img src="\${GAME_CONFIG.images[it]}" class="max-h-full object-contain pointer-events-none">\`:\`<span class="text-[7px]">📷 \${it}</span>\`}</div>\`).join('');
+                setupSortable('dressing', word);
+            }
+            else if(lvlConfig.type === 'domino') {
+                stage.innerHTML = \`<div class="flex items-center gap-6"><div class="domino-tile opacity-40"><div class="tile-img">?</div><div class="tile-text">\${word}</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">DROP</div></div>\`;
+                pool.innerHTML = GAME_CONFIG.items.map((it, i) => {
+                    const imgNeeded = i === 0 ? GAME_CONFIG.items[GAME_CONFIG.items.length-1] : GAME_CONFIG.items[i-1];
+                    return \`<div class="domino-tile shadow-lg" data-word="\${it}"><div class="tile-img">\${GAME_CONFIG.images[imgNeeded]?\`<img src="\${GAME_CONFIG.images[imgNeeded]}" class="object-contain w-full h-full">\`:\`📷 \${imgNeeded}\`}</div><div class="tile-text">\${it}</div></div>\`;
+                }).join('');
+                setupSortable('domino', word);
+            }
+            else if(lvlConfig.type === 'rebus') {
+                const text = GAME_CONFIG.items[idx].replace(/{([^}]+)}/g, \`<div id="target" class="rebus-gap overflow-hidden flex items-center justify-center" data-ans="$1"></div>\`);
+                stage.innerHTML = \`<div class="text-2xl font-bold text-blue-900 leading-loose">\${text}</div>\`;
+                pool.innerHTML = GAME_CONFIG.items.map(it => \`<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="\${it}">\${it}</div>\`).join('');
+                setupSortable('rebus', word);
+            }
+            else if(lvlConfig.type === 'anagramme') {
+                const shuffled = word.split('').sort(()=>Math.random()-0.5);
+                stage.innerHTML = \`<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md">\${GAME_CONFIG.images[word]?\`<img src="\${GAME_CONFIG.images[word]}" class="h-full w-full object-contain">\`:'📷'}</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>\`;
+                pool.innerHTML = shuffled.map(l => \`<div class="letter-tile" data-letter="\${l}">\${l.toUpperCase()}</div>\`).join('');
+                setupSortable('anagramme', word);
+            }
+        }
+
+        function setupSortable(mode, targetWord) {
+            const pool = document.getElementById('pool');
+            const target = document.getElementById('target');
+            if(!target || !pool) return;
+
+            new Sortable(pool, { group: 'game', sort: false, animation: 150 });
+            new Sortable(target, { 
+                group: 'game', animation: 150,
+                onAdd: (e) => {
+                    const dropped = e.item.getAttribute('data-word') || e.item.getAttribute('data-letter');
+                    
+                    if(mode === 'dressing') {
+                        if(dropped.toLowerCase() === targetWord.toLowerCase()) {
+                            e.item.className = "w-full h-full flex items-center justify-center p-0 m-0 border-0 bg-transparent shadow-none";
+                            const img = e.item.querySelector('img');
+                            if(img) img.className = "w-full h-full object-contain pointer-events-none";
+                            e.target.style.border = "none"; e.target.style.backgroundColor = "transparent";
+                            validate(true);
+                        } else { e.item.remove(); validate(false); }
+                    }
+                    else if(mode === 'domino') {
+                        const nextItem = GAME_CONFIG.items[curStep + 1] || GAME_CONFIG.items[0];
+                        if(dropped === nextItem) validate(true);
+                        else { e.item.remove(); validate(false); }
+                    }
+                    else if(mode === 'rebus') {
+                        e.item.className = "w-full h-full flex items-center justify-center text-sm font-bold bg-transparent border-none shadow-none text-blue-900 m-0 p-0";
+                        e.target.style.border = "none";
+                        validate(true);
+                    }
+                    else if(mode === 'anagramme') {
+                        const current = Array.from(target.children).map(el=>el.getAttribute('data-letter')).join('');
+                        if(current === targetWord) validate(true);
+                    }
+                }
+            });
+        }
+
+        function validate(correct) {
+            if(correct) { 
+                confetti(); status[curStep]='completed'; 
+                if(GAME_CONFIG.audio['global_ok']) new Audio(GAME_CONFIG.audio['global_ok']).play();
+                setTimeout(()=>loadStep(curStep < GAME_CONFIG.items.length-1 ? curStep+1 : 0), 1500); 
+            }
+            else {
+                status[curStep]='error';
+                if(GAME_CONFIG.audio['global_ko']) new Audio(GAME_CONFIG.audio['global_ko']).play();
+            }
+            renderNav();
+        }
+
+        function renderNav() { document.getElementById('nav-step').innerHTML = GAME_CONFIG.items.map((_, i) => \`<div class="step-pill \${i===curStep?'active':''} \${status[i]}" onclick="loadStep(\${i})">\${i+1}</div>\`).join(''); }
+
+        function switchLvl(l) { 
+            curLvl = l; 
+            document.getElementById('btn-f-view').className = l==='facile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900';
+            document.getElementById('btn-d-view').className = l==='difficile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 text-blue-900';
+            loadStep(0);
+        }
+
+        function playConsigne() {
+            const key = curLvl === 'facile' ? 'aud-f' : 'aud-d';
+            if(GAME_CONFIG.audio[key]) { new Audio(GAME_CONFIG.audio[key]).play(); } 
+            else { const m = new SpeechSynthesisUtterance(GAME_CONFIG.levels[curLvl].consigne); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
+        }
+    <\/script>
+</body>
+</html>`;
+
             zip.file("index.html", playerHTML);
 
-            zip.generateAsync({type:"blob"}).then(c => saveAs(c, `bSmart_${gameConfig.titre}.zip`));
+            // 5. Genera lo ZIP e attiva il Download
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, `bSmart_${gameConfig.titre.replace(/\s+/g, '_')}.zip`);
+            });
         }
-    </script>
-</body>
-</html>
