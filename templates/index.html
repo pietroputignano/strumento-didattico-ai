@@ -19,7 +19,7 @@
         .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
         .step-pill.completed { background-color: var(--hfle-success); }
         
-        /* Componenti Gioco */
+        /* Moduli Gioco */
         .domino-tile { border: 3px solid var(--hfle-blue); border-radius: 12px; display: flex; background: white; height: 85px; width: 190px; cursor: grab; overflow: hidden; flex-shrink: 0; }
         .tile-img { width: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border-right: 2px dashed var(--hfle-blue); position: relative; }
         .tile-img img { max-height: 85%; max-width: 85%; object-fit: contain; }
@@ -35,10 +35,15 @@
 
         /* Crossword UI */
         .cw-grid { display: grid; grid-template-columns: repeat(12, 35px); gap: 2px; justify-content: center; }
-        .cw-cell { width: 35px; height: 35px; border: 1px solid #ccc; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 18px; outline: none; }
+        .cw-cell-wrapper { position: relative; width: 35px; height: 35px; }
+        .cw-number { position: absolute; top: 1px; left: 3px; font-size: 10px; font-weight: bold; color: var(--hfle-blue); pointer-events: none; z-index: 10; }
+        .cw-cell { width: 100%; height: 100%; border: 1px solid #ccc; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 16px; outline: none; }
         .cw-cell:focus { border: 2px solid var(--hfle-orange); background: #fff8e1; }
-        .cw-play-cell { width: 40px; height: 40px; border: 2px solid var(--hfle-blue); text-align: center; font-weight: bold; text-transform: uppercase; font-size: 20px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .cw-play-cell.correct { background-color: var(--hfle-success); color: white; border-color: var(--hfle-success); }
+        
+        .cw-play-wrapper { position: relative; width: 40px; height: 40px; }
+        .cw-play-cell { width: 100%; height: 100%; border: 2px solid var(--hfle-blue); text-align: center; font-weight: bold; text-transform: uppercase; font-size: 18px; border-radius: 4px; outline: none; }
+        .cw-play-cell:focus { background: #e0f2fe; }
+        .cw-play-cell.correct { background-color: var(--hfle-success); color: white; border-color: var(--hfle-success); pointer-events: none; }
     </style>
 </head>
 <body class="p-2 md:p-4">
@@ -63,16 +68,17 @@
     </div>
 
     <div id="cw-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-bg">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh]">
             <div class="p-4 border-b flex justify-between items-center bg-orange-50">
                 <h3 class="font-bold text-orange-900">🧩 Costruttore Cruciverba</h3>
-                <button onclick="closeCWBuilder()" class="bg-orange-600 text-white px-6 py-2 rounded-full font-bold">Salva Griglia</button>
+                <div class="flex gap-2">
+                    <button onclick="findCWWords()" class="bg-blue-500 text-white px-4 py-2 rounded-full font-bold text-sm">🔍 Genera Numeri e Definizioni</button>
+                    <button onclick="closeCWBuilder()" class="bg-orange-600 text-white px-6 py-2 rounded-full font-bold text-sm">Salva Griglia</button>
+                </div>
             </div>
-            <div class="p-4 bg-gray-50 border-b text-sm text-gray-600 text-center">
-                Digita le lettere nelle caselle per creare gli incroci. Il sistema salverà solo le caselle piene.
-            </div>
-            <div class="p-8 bg-slate-200 flex justify-center items-center">
-                <div id="cw-builder-grid" class="cw-grid bg-white p-4 shadow-lg rounded-lg"></div>
+            <div class="flex-grow overflow-auto p-6 bg-slate-200 flex flex-col items-center">
+                <div id="cw-builder-grid" class="cw-grid bg-white p-4 shadow-lg rounded-lg mb-6"></div>
+                <div id="cw-clues-container" class="w-full bg-white p-4 shadow-lg rounded-lg hidden"></div>
             </div>
         </div>
     </div>
@@ -139,11 +145,11 @@
             </div>
 
             <div class="p-8 flex-grow flex flex-col items-center">
-                <div class="flex items-center gap-3 mb-10 bg-slate-50 px-8 py-3 rounded-full border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3 mb-6 bg-slate-50 px-8 py-3 rounded-full border border-slate-200 shadow-sm">
                     <p id="res-consigne" class="italic text-gray-700 font-bold text-lg"></p>
                     <button onclick="playConsigne()" class="text-blue-600 text-2xl hover:scale-125 transition">🔊</button>
                 </div>
-                <div id="main-content" class="w-full flex flex-col items-center gap-10"></div>
+                <div id="main-content" class="w-full flex flex-col items-center gap-6"></div>
                 <div id="pool" class="mt-auto p-6 w-full flex flex-wrap justify-center gap-6 border-t border-dashed border-slate-200"></div>
             </div>
             <div id="nav-step" class="p-5 bg-slate-50 border-t flex justify-center gap-3 flex-wrap"></div>
@@ -164,12 +170,11 @@
 
         let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'facile', status = [], activeKey = "";
         let mappedZones = [];
-        let cwData = []; // Array per salvare le celle del cruciverba {x, y, char}
+        let cwData = []; // {x, y, char, num}
+        let cwClues = []; // {num, dir, word, clue}
 
         window.onload = () => {
-            document.querySelectorAll('.type-sel').forEach(s => {
-                s.innerHTML = types.map(t=>`<option value="${t.id}">${t.n}</option>`).join('');
-            });
+            document.querySelectorAll('.type-sel').forEach(s => { s.innerHTML = types.map(t=>`<option value="${t.id}">${t.n}</option>`).join(''); });
             toggleToolBtns('f'); toggleToolBtns('d');
             buildCWGrid();
         };
@@ -180,20 +185,15 @@
             document.getElementById(`btn-cw-${l}`).classList.toggle('hidden', type !== 'crossword');
         }
 
-        /* --- VISUAL MAPPER (DRESSING GAME) --- */
+        /* --- VISUAL MAPPER LOGIC --- */
         function openMapper() { document.getElementById('mapper-modal').classList.remove('hidden'); }
         function closeMapper() { document.getElementById('mapper-modal').classList.add('hidden'); initGame(); }
-        
         function addZone() {
-            const z = document.createElement('div'); z.className = 'mapper-zone';
-            z.style.cssText = "width:20%; height:20%; left:40%; top:40%;";
+            const z = document.createElement('div'); z.className = 'mapper-zone'; z.style.cssText = "width:20%; height:20%; left:40%; top:40%;";
             const word = items[mappedZones.length] || "item";
             z.innerHTML = `<input class="w-16 text-[8px] font-bold text-center border-none bg-white/80" value="${word}" onchange="this.parentElement.dataset.word=this.value"><div class="resize-handle"></div>`;
-            z.dataset.word = word;
-            document.getElementById('mapper-container').appendChild(z);
-            makeDraggable(z);
+            z.dataset.word = word; document.getElementById('mapper-container').appendChild(z); makeDraggable(z);
         }
-
         function makeDraggable(el) {
             let container = document.getElementById('mapper-container');
             el.onmousedown = (e) => {
@@ -201,44 +201,104 @@
                 let sx = e.clientX, sy = e.clientY;
                 document.onmousemove = (ev) => {
                     let dx = ev.clientX-sx, dy = ev.clientY-sy; sx=ev.clientX; sy=ev.clientY;
-                    el.style.left = (el.offsetLeft + dx)/container.offsetWidth*100 + '%';
-                    el.style.top = (el.offsetTop + dy)/container.offsetHeight*100 + '%';
+                    el.style.left = (el.offsetLeft + dx)/container.offsetWidth*100 + '%'; el.style.top = (el.offsetTop + dy)/container.offsetHeight*100 + '%';
                 };
                 document.onmouseup = () => { document.onmousemove = null; saveZones(); };
             };
             el.querySelector('.resize-handle').onmousedown = (e) => {
                 e.stopPropagation();
-                document.onmousemove = (ev) => {
-                    el.style.width = (ev.clientX - el.getBoundingClientRect().left)/container.offsetWidth*100 + '%';
-                    el.style.height = (ev.clientY - el.getBoundingClientRect().top)/container.offsetHeight*100 + '%';
-                };
+                document.onmousemove = (ev) => { el.style.width = (ev.clientX - el.getBoundingClientRect().left)/container.offsetWidth*100 + '%'; el.style.height = (ev.clientY - el.getBoundingClientRect().top)/container.offsetHeight*100 + '%'; };
                 document.onmouseup = () => { document.onmousemove = null; saveZones(); };
             };
         }
+        function saveZones() { mappedZones = Array.from(document.querySelectorAll('.mapper-zone')).map(z => ({ word: z.dataset.word, left: z.style.left, top: z.style.top, width: z.style.width, height: z.style.height })); }
 
-        function saveZones() {
-            mappedZones = Array.from(document.querySelectorAll('.mapper-zone')).map(z => ({
-                word: z.dataset.word, left: z.style.left, top: z.style.top, width: z.style.width, height: z.style.height
-            }));
-        }
-
-        /* --- CROSSWORD BUILDER --- */
+        /* --- CROSSWORD BUILDER LOGIC --- */
         function openCWBuilder() { document.getElementById('cw-modal').classList.remove('hidden'); }
         function buildCWGrid() {
             let html = '';
             for(let y=0; y<12; y++) {
                 for(let x=0; x<12; x++) {
-                    html += `<input type="text" maxlength="1" class="cw-cell" data-x="${x}" data-y="${y}">`;
+                    html += `<div class="cw-cell-wrapper"><input type="text" maxlength="1" class="cw-cell" data-x="${x}" data-y="${y}"></div>`;
                 }
             }
             document.getElementById('cw-builder-grid').innerHTML = html;
         }
-        function closeCWBuilder() {
-            cwData = [];
-            document.querySelectorAll('#cw-builder-grid .cw-cell').forEach(inp => {
-                if(inp.value.trim() !== '') {
-                    cwData.push({ x: parseInt(inp.dataset.x), y: parseInt(inp.dataset.y), char: inp.value.toUpperCase() });
+
+        // Funzione Cuore per rilevare parole e inserire Definizioni
+        function findCWWords() {
+            let grid = [];
+            for(let y=0; y<12; y++) {
+                grid[y] = [];
+                for(let x=0; x<12; x++) {
+                    grid[y][x] = document.querySelector(`.cw-cell[data-x="${x}"][data-y="${y}"]`).value.trim().toUpperCase();
                 }
+            }
+
+            let words = []; let counter = 1;
+
+            // Scansione Orizzontale
+            for(let y=0; y<12; y++) {
+                let currWord = ""; let startX = -1;
+                for(let x=0; x<=12; x++) {
+                    if(x<12 && grid[y][x]) { if(currWord === "") startX = x; currWord += grid[y][x]; }
+                    else { if(currWord.length > 1) words.push({ word: currWord, x: startX, y: y, dir: 'h' }); currWord = ""; }
+                }
+            }
+            // Scansione Verticale
+            for(let x=0; x<12; x++) {
+                let currWord = ""; let startY = -1;
+                for(let y=0; y<=12; y++) {
+                    if(y<12 && grid[y][x]) { if(currWord === "") startY = y; currWord += grid[y][x]; }
+                    else { if(currWord.length > 1) words.push({ word: currWord, x: x, y: startY, dir: 'v' }); currWord = ""; }
+                }
+            }
+
+            if(words.length === 0) { alert("Nessuna parola trovata. Assicurati che le parole abbiano almeno 2 lettere incrociate."); return; }
+
+            // Assegna numeri alle caselle iniziali
+            let starts = {};
+            words.forEach(w => {
+                let key = `${w.x}-${w.y}`;
+                if(!starts[key]) starts[key] = counter++;
+                w.num = starts[key];
+            });
+
+            // Mostra i numeri sulla griglia visuale
+            document.querySelectorAll('.cw-number').forEach(e => e.remove());
+            Object.keys(starts).forEach(key => {
+                let [x,y] = key.split('-');
+                let cellWrap = document.querySelector(`.cw-cell[data-x="${x}"][data-y="${y}"]`).parentElement;
+                let span = document.createElement('span'); span.className = 'cw-number'; span.innerText = starts[key];
+                cellWrap.appendChild(span);
+            });
+
+            // Crea campi per le definizioni
+            let cluesHtml = `<h4 class="font-bold text-blue-900 border-b pb-2 mb-3">Definizioni per le parole trovate</h4><div class="grid grid-cols-2 gap-4">`;
+            words.sort((a,b) => a.num - b.num).forEach(w => {
+                let label = w.dir === 'h' ? 'Orizzontale' : 'Verticale';
+                let prevClue = cwClues.find(c => c.word === w.word && c.dir === w.dir)?.clue || "";
+                cluesHtml += `<div><label class="text-xs font-bold text-gray-700 block">${w.num}. ${label} (${w.word})</label>
+                    <input type="text" class="cw-clue-input w-full border border-gray-300 rounded p-2 text-xs focus:border-blue-500" data-word="${w.word}" data-num="${w.num}" data-dir="${w.dir}" value="${prevClue}" placeholder="Es: Si usa per scrivere..."></div>`;
+            });
+            cluesHtml += `</div>`;
+            
+            const cont = document.getElementById('cw-clues-container');
+            cont.innerHTML = cluesHtml; cont.classList.remove('hidden');
+        }
+
+        function closeCWBuilder() {
+            cwData = []; cwClues = [];
+            // Salva Caselle e Numerini
+            document.querySelectorAll('.cw-cell').forEach(inp => {
+                if(inp.value.trim() !== '') {
+                    let numSpan = inp.parentElement.querySelector('.cw-number');
+                    cwData.push({ x: parseInt(inp.dataset.x), y: parseInt(inp.dataset.y), char: inp.value.toUpperCase(), num: numSpan ? parseInt(numSpan.innerText) : null });
+                }
+            });
+            // Salva Definizioni
+            document.querySelectorAll('.cw-clue-input').forEach(inp => {
+                cwClues.push({ num: parseInt(inp.dataset.num), dir: inp.dataset.dir, word: inp.dataset.word, clue: inp.value || inp.dataset.word });
             });
             document.getElementById('cw-modal').classList.add('hidden');
             initGame();
@@ -262,32 +322,38 @@
             const type = document.getElementById(typeId).value;
             
             document.getElementById('res-consigne').innerText = curLvl === 'facile' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
-            pool.innerHTML = ''; // Svuota sempre il pool
+            pool.innerHTML = '';
             
             if(type === 'crossword') {
-                if(cwData.length === 0) { stage.innerHTML = "<p class='text-gray-400'>Usa il Costruttore Cruciverba (🧩) per creare la griglia.</p>"; return; }
+                if(cwData.length === 0) { stage.innerHTML = "<p class='text-gray-400'>Usa il Costruttore Cruciverba (🧩) per creare la griglia e le definizioni.</p>"; return; }
                 
-                // Disegna la griglia di gioco
-                let html = '<div class="grid gap-1 p-6 bg-blue-50 rounded-xl border-2 border-blue-200" style="grid-template-columns: repeat(12, 40px);">';
+                // Disegna la griglia di gioco e le definizioni
+                let gridHtml = '<div class="grid gap-1 p-6 bg-blue-50 rounded-xl border-2 border-blue-200" style="grid-template-columns: repeat(12, 40px);">';
                 for(let y=0; y<12; y++) {
                     for(let x=0; x<12; x++) {
                         let cell = cwData.find(c => c.x === x && c.y === y);
-                        if(cell) html += `<input type="text" maxlength="1" class="cw-play-cell" data-ans="${cell.char}" oninput="checkCrossword()">`;
-                        else html += `<div class="w-10 h-10"></div>`;
+                        if(cell) gridHtml += `<div class="cw-play-wrapper"><span class="cw-number">${cell.num || ''}</span><input type="text" maxlength="1" class="cw-play-cell" data-ans="${cell.char}" oninput="checkCrossword()"></div>`;
+                        else gridHtml += `<div class="w-10 h-10"></div>`;
                     }
                 }
-                html += '</div>';
-                stage.innerHTML = html;
+                gridHtml += '</div>';
+
+                let cluesHtml = '<div class="w-full max-w-2xl bg-white border rounded-xl p-4 shadow mt-6"><h3 class="font-bold text-blue-900 border-b pb-2 mb-2">Définitions</h3><div class="flex flex-wrap gap-4 text-sm text-gray-700">';
+                cwClues.forEach(c => {
+                    cluesHtml += `<div class="w-[45%]"><b>${c.num}. ${c.dir === 'h' ? 'Horizontal' : 'Vertical'} :</b> ${c.clue}</div>`;
+                });
+                cluesHtml += '</div></div>';
+
+                stage.innerHTML = `<div class="flex flex-col items-center w-full">${gridHtml}${cluesHtml}</div>`;
                 document.getElementById('nav-step').innerHTML = ''; // Niente steps nel cruciverba
-                return; // Stop esecuzione
+                return;
             }
 
-            // Logiche per le altre tipologie (solo se ci sono items)
             if(items.length === 0) return;
             const word = items[idx];
 
             if(type === 'dressing') {
-                const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Usa il Visual Mapper per lo sfondo</div>`;
+                const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Usa Mapper per lo sfondo</div>`;
                 const zone = mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
                 const targetHtml = zone ? `<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:${zone.left}; top:${zone.top}; width:${zone.width}; height:${zone.height}"></div>` : '';
                 stage.innerHTML = `<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">${bg}${targetHtml}</div>`;
@@ -316,16 +382,13 @@
             }
         }
 
-        // VALIDATORE CRUCIVERBA (Opzione A - Validazione Automatica a completamento griglia)
         function checkCrossword() {
             let allCorrect = true;
             let inputs = document.querySelectorAll('.cw-play-cell');
-            
             inputs.forEach(inp => {
                 if(inp.value.toUpperCase() !== inp.dataset.ans) { allCorrect = false; inp.classList.remove('correct'); }
                 else { inp.classList.add('correct'); }
             });
-
             if(allCorrect && inputs.length > 0) {
                 confetti();
                 if(dbAud['global_ok']) new Audio(dbAud['global_ok']).play();
@@ -336,17 +399,14 @@
             const target = document.getElementById('target');
             const pool = document.getElementById('pool');
             if(!target || !pool) return;
-
             new Sortable(pool, { group: 'game', sort: false });
             new Sortable(target, { 
                 group: 'game', animation: 150,
                 onAdd: (e) => {
                     const dropped = e.item.getAttribute('data-word') || e.item.getAttribute('data-letter');
-                    
                     if(mode === 'dressing' && dropped.toLowerCase() === targetWord.toLowerCase()) {
                         e.item.className = "w-full h-full flex items-center justify-center border-0 bg-transparent shadow-none";
-                        const img = e.item.querySelector('img');
-                        if(img) img.className = "w-full h-full object-contain pointer-events-none";
+                        const img = e.item.querySelector('img'); if(img) img.className = "w-full h-full object-contain pointer-events-none";
                         e.target.style.border = "none"; e.target.style.backgroundColor = "transparent";
                         validate(true);
                     } else if(mode === 'anagramme') {
@@ -376,7 +436,7 @@
 
         function renderNav() { 
             const type = curLvl === 'facile' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
-            if(type === 'crossword') { document.getElementById('nav-step').innerHTML = ''; return; } // Niente step nel cruciverba
+            if(type === 'crossword') { document.getElementById('nav-step').innerHTML = ''; return; }
             document.getElementById('nav-step').innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${status[i]}" onclick="loadStep(${i})">${i+1}</div>`).join(''); 
         }
 
@@ -387,18 +447,13 @@
             initGame(); 
         }
 
-        /* --- GESTIONE FILES --- */
         function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
         function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
         
         function handleImg(e) { 
             const r = new FileReader(); r.onload=(ev)=>{ 
                 dbImg[activeKey]=ev.target.result; 
-                if(activeKey==='mapper_bg'){ 
-                    document.getElementById('mapper-preview').src=ev.target.result; 
-                    document.getElementById('mapper-preview').classList.remove('hidden'); 
-                    document.getElementById('mapper-hint').classList.add('hidden'); 
-                }
+                if(activeKey==='mapper_bg'){ document.getElementById('mapper-preview').src=ev.target.result; document.getElementById('mapper-preview').classList.remove('hidden'); document.getElementById('mapper-hint').classList.add('hidden'); }
                 loadStep(curStep); 
             }; r.readAsDataURL(e.target.files[0]); 
         }
@@ -410,7 +465,7 @@
             else { const m=new SpeechSynthesisUtterance(document.getElementById(curLvl === 'facile' ? 'con-f' : 'con-d').value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
         }
 
-        /* --- EXPORT JSZIP (STANDALONE PLAYER AGGIORNATO) --- */
+        /* --- EXPORT JSZIP --- */
         async function exportToZIP() {
             const typeF = document.getElementById('type-f').value;
             const typeD = document.getElementById('type-d').value;
@@ -446,13 +501,8 @@
             }
 
             const gameConfig = { 
-                unite: document.getElementById('in-unite').value, 
-                titre: document.getElementById('in-titre').value, 
-                items: items, 
-                mappedZones: mappedZones, 
-                cwData: cwData, // Salva la griglia del cruciverba
-                images: expImg, 
-                audio: expAud, 
+                unite: document.getElementById('in-unite').value, titre: document.getElementById('in-titre').value, 
+                items: items, mappedZones: mappedZones, cwData: cwData, cwClues: cwClues, images: expImg, audio: expAud, 
                 levels: { 
                     facile: { type: typeF, consigne: document.getElementById('con-f').value }, 
                     difficile: { type: typeD, consigne: document.getElementById('con-d').value } 
@@ -483,8 +533,12 @@
         .drop-target { width: 190px; height: 85px; border: 3px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: bold; }
         .letter-tile { width: 40px; height: 40px; background: var(--hfle-orange); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: grab; }
         .rebus-gap { display: inline-block; width: 60px; height: 40px; border: 2px dashed var(--hfle-blue); border-radius: 8px; vertical-align: middle; margin: 0 5px; background: #f8fafc; }
-        .cw-play-cell { width: 40px; height: 40px; border: 2px solid var(--hfle-blue); text-align: center; font-weight: bold; text-transform: uppercase; font-size: 20px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .cw-play-cell.correct { background-color: var(--hfle-success); color: white; border-color: var(--hfle-success); }
+        
+        .cw-play-wrapper { position: relative; width: 40px; height: 40px; }
+        .cw-number { position: absolute; top: 1px; left: 3px; font-size: 10px; font-weight: bold; color: var(--hfle-blue); pointer-events: none; z-index: 10; }
+        .cw-play-cell { width: 100%; height: 100%; border: 2px solid var(--hfle-blue); text-align: center; font-weight: bold; text-transform: uppercase; font-size: 18px; border-radius: 4px; outline: none; }
+        .cw-play-cell:focus { background: #e0f2fe; }
+        .cw-play-cell.correct { background-color: var(--hfle-success); color: white; border-color: var(--hfle-success); pointer-events: none; }
     </style>\n</head>\n`;
 
             playerHTML += `<body class="p-2 md:p-4 flex justify-center items-center min-h-screen">
@@ -526,16 +580,23 @@
             pool.innerHTML = '';
 
             if(lvlConfig.type === 'crossword') {
-                let html = '<div class="grid gap-1 p-6 bg-blue-50 rounded-xl border-2 border-blue-200" style="grid-template-columns: repeat(12, 40px);">';
+                let gridHtml = '<div class="grid gap-1 p-6 bg-blue-50 rounded-xl border-2 border-blue-200" style="grid-template-columns: repeat(12, 40px);">';
                 for(let y=0; y<12; y++) {
                     for(let x=0; x<12; x++) {
                         let cell = GAME_CONFIG.cwData.find(c => c.x === x && c.y === y);
-                        if(cell) html += '<input type="text" maxlength="1" class="cw-play-cell" data-ans="' + cell.char + '" oninput="checkCrossword()">';
-                        else html += '<div class="w-10 h-10"></div>';
+                        if(cell) gridHtml += '<div class="cw-play-wrapper"><span class="cw-number">' + (cell.num || '') + '</span><input type="text" maxlength="1" class="cw-play-cell" data-ans="' + cell.char + '" oninput="checkCrossword()"></div>';
+                        else gridHtml += '<div class="w-10 h-10"></div>';
                     }
                 }
-                html += '</div>';
-                stage.innerHTML = html;
+                gridHtml += '</div>';
+
+                let cluesHtml = '<div class="w-full max-w-2xl bg-white border rounded-xl p-4 shadow mt-6"><h3 class="font-bold text-blue-900 border-b pb-2 mb-2">Définitions</h3><div class="flex flex-wrap gap-4 text-sm text-gray-700">';
+                GAME_CONFIG.cwClues.forEach(c => {
+                    cluesHtml += '<div class="w-[45%]"><b>' + c.num + '. ' + (c.dir === 'h' ? 'Horizontal' : 'Vertical') + ' :</b> ' + c.clue + '</div>';
+                });
+                cluesHtml += '</div></div>';
+
+                stage.innerHTML = '<div class="flex flex-col items-center w-full">' + gridHtml + cluesHtml + '</div>';
                 document.getElementById('nav-step').innerHTML = '';
                 return;
             }
@@ -549,7 +610,6 @@
                 const zone = GAME_CONFIG.mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
                 const targetHtml = zone ? '<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:' + zone.left + '; top:' + zone.top + '; width:' + zone.width + '; height:' + zone.height + '"></div>' : '';
                 stage.innerHTML = '<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">' + bg + targetHtml + '</div>';
-                
                 pool.innerHTML = GAME_CONFIG.items.map(it => {
                     const imgContent = GAME_CONFIG.images[it] ? '<img src="' + GAME_CONFIG.images[it] + '" class="max-h-full object-contain pointer-events-none">' : '<span class="text-[7px]">📷 ' + it + '</span>';
                     return '<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center transition-all" data-word="' + it + '">' + imgContent + '</div>';
