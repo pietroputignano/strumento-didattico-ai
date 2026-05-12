@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>bSmart | Jeux Interactifs</title>
+    <title>bSmart | Jeux interactifs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -40,11 +40,11 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col h-[90vh]">
             <div class="p-4 border-b flex justify-between items-center bg-blue-50">
                 <h3 class="font-bold text-blue-900">🗺️ Visual Mapper - Dressing Game</h3>
-                <button onclick="closeMapper()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">Salva e Chiudi</button>
+                <button onclick="closeMapper()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition">Salva e Chiudi</button>
             </div>
             <div class="p-4 flex gap-4 bg-gray-50 border-b">
-                <button onclick="pickImg('mapper_bg')" class="bg-white border-2 border-blue-200 px-4 py-2 rounded font-bold text-xs">1. Carica Sfondo</button>
-                <button onclick="addZone()" class="bg-white border-2 border-orange-200 px-4 py-2 rounded font-bold text-xs text-orange-700">+ 2. Aggiungi Zona Incastro</button>
+                <button onclick="pickImg('mapper_bg')" class="bg-white border-2 border-blue-200 px-4 py-2 rounded font-bold text-xs hover:bg-blue-50">1. Carica Sfondo</button>
+                <button onclick="addZone()" class="bg-white border-2 border-orange-200 px-4 py-2 rounded font-bold text-xs text-orange-700 hover:bg-orange-50">+ 2. Aggiungi Zona Incastro</button>
             </div>
             <div class="flex-grow overflow-auto p-10 bg-slate-300 flex justify-center">
                 <div id="mapper-container" class="relative bg-white shadow-xl min-w-[500px] min-h-[500px]">
@@ -56,6 +56,7 @@
     </div>
 
     <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-4">
+        
         <div class="lg:w-1/3 bg-white p-5 rounded-xl shadow-lg border-t-8 border-blue-800 overflow-y-auto max-h-[95vh] text-xs">
             <h2 class="text-xl font-bold text-blue-900 mb-4 border-b pb-2 uppercase">Loustics Configurator</h2>
             
@@ -93,7 +94,10 @@
                     <p class="text-[9px] text-gray-500 italic mt-1">Per il Rebus usa: {item} nel testo.</p>
                 </div>
             </div>
+            
             <button onclick="initGame()" class="w-full mt-6 bg-blue-700 text-white py-4 rounded-xl font-black text-sm shadow-xl hover:bg-blue-800 transition">🚀 GENERA ATTIVITÀ</button>
+            
+            <button onclick="exportToZIP()" class="w-full mt-3 bg-green-600 text-white py-4 rounded-xl font-black text-sm shadow-xl hover:bg-green-700 transition">📥 SCARICA PACCHETTO ZIP</button>
         </div>
 
         <div class="lg:w-2/3 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
@@ -125,6 +129,7 @@
     <input type="file" id="audInp" class="hidden" accept="audio/*" onchange="handleAud(event)">
 
     <script>
+        // CONFIGURAZIONE TIPI DI GIOCO
         const types = [
             {id: 'domino', n: 'Domino Chain'},
             {id: 'anagramme', n: 'Anagramme (Ordering)'},
@@ -136,7 +141,7 @@
         let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'f', status = [], activeKey = "";
         let mappedZones = [];
 
-        // Popola select
+        // Inizializza i select per entrambi i livelli
         document.querySelectorAll('.type-sel').forEach(s => s.innerHTML = types.map(t=>`<option value="${t.id}">${t.n}</option>`).join(''));
 
         function toggleMapperBtn(l) {
@@ -157,16 +162,17 @@
         function loadStep(idx) {
             if(items.length === 0) return;
             curStep = idx; renderNav();
+            
             const stage = document.getElementById('main-content');
             const pool = document.getElementById('pool');
             const word = items[idx];
             const type = curLvl === 'f' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
+            
             document.getElementById('res-consigne').innerText = curLvl === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
 
             if(type === 'dressing') {
                 const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Carica Sfondo nel Mapper</div>`;
                 const zone = mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
-                // Rimosso il bg visibile se non necessario, ma utile per il debug
                 const targetHtml = zone ? `<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:${zone.left}; top:${zone.top}; width:${zone.width}; height:${zone.height}"></div>` : '';
                 
                 stage.innerHTML = `<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">${bg}${targetHtml}</div>`;
@@ -187,7 +193,7 @@
                 pool.innerHTML = items.map(it => `<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="${it}">${it}</div>`).join('');
                 setupSortable('rebus', word);
             }
-            // ... (altre tipologie)
+            // Aggiungi qui altre logiche per 'anagramme', 'crossword' se necessario
         }
 
         function setupSortable(mode, targetWord) {
@@ -204,17 +210,11 @@
                     
                     if(mode === 'dressing') {
                         if(dropped.toLowerCase() === targetWord.toLowerCase()) {
-                            // ADATTAMENTO AL 100% DELL'AREA:
                             e.item.className = "w-full h-full flex items-center justify-center p-0 m-0 border-0 bg-transparent shadow-none";
-                            
-                            // Adatta l'immagine interna
                             const img = e.item.querySelector('img');
                             if(img) img.className = "w-full h-full object-contain pointer-events-none";
-
-                            // Nascondi i tratteggi del target
                             e.target.style.border = "none";
                             e.target.style.backgroundColor = "transparent";
-
                             validate(true);
                         } else { alert("Riprova!"); e.item.remove(); validate(false); }
                     }
@@ -224,7 +224,6 @@
                         else { alert("Riprova!"); e.item.remove(); validate(false); }
                     }
                     else if(mode === 'rebus') {
-                        // Semplificazione validazione rebus
                         e.item.className = "w-full h-full flex items-center justify-center text-sm font-bold bg-transparent border-none shadow-none text-blue-900 m-0 p-0";
                         e.target.style.border = "none";
                         validate(true);
@@ -255,6 +254,7 @@
             initGame();
         }
 
+        /* --- GESTIONE FILES (INPUT IMAGE/AUDIO) --- */
         function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
         function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
         
@@ -320,6 +320,97 @@
                 const m = new SpeechSynthesisUtterance(document.getElementById(`con-${curLvl}`).value); 
                 m.lang='fr-FR'; window.speechSynthesis.speak(m); 
             }
+        }
+
+        /* --- MOTORE DI ESPORTAZIONE ZIP --- */
+        async function exportToZIP() {
+            if(items.length === 0) {
+                alert("Attenzione: Inserisci dei dati prima di esportare!");
+                return;
+            }
+
+            const zip = new JSZip();
+
+            // Costruisci l'albero delle directory (come richiesto)
+            const assetsFolder = zip.folder("assets");
+            const jsFolder = zip.folder("js");
+
+            // Utility per decodificare base64 in File/Blob
+            function dataURLtoBlob(dataurl) {
+                let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+                let bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+                return new Blob([u8arr], {type:mime});
+            }
+
+            let exportedImgMap = {};
+            // Popola /assets con le Immagini e registra i percorsi relativi
+            for(let key in dbImg) {
+                if(!dbImg[key]) continue;
+                let ext = dbImg[key].match(/data:image\/(.*);base64/)[1];
+                let cleanName = key.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                let filename = `${cleanName}.${ext}`;
+                assetsFolder.file(filename, dataURLtoBlob(dbImg[key]));
+                exportedImgMap[key] = `assets/${filename}`;
+            }
+
+            let exportedAudMap = {};
+            // Popola /assets con l'Audio
+            for(let key in dbAud) {
+                if(!dbAud[key]) continue;
+                let ext = dbAud[key].includes('mpeg') ? 'mp3' : 'wav';
+                let filename = `${key}.${ext}`;
+                assetsFolder.file(filename, dataURLtoBlob(dbAud[key]));
+                exportedAudMap[key] = `assets/${filename}`;
+            }
+
+            // Impacchetta i dati inseriti dall'utente nel file config.js
+            const gameConfig = {
+                unite: document.getElementById('in-unite').value || "UNITÉ",
+                titre: document.getElementById('in-titre').value || "ACTIVITÉ",
+                items: items,
+                mappedZones: mappedZones,
+                levels: {
+                    facile: { type: document.getElementById('type-f').value, consigne: document.getElementById('con-f').value },
+                    difficile: { type: document.getElementById('type-d').value, consigne: document.getElementById('con-d').value }
+                },
+                images: exportedImgMap,
+                audio: exportedAudMap
+            };
+
+            jsFolder.file("config.js", `const GAME_CONFIG = ${JSON.stringify(gameConfig, null, 2)};`);
+
+            // Creazione stringa del Player per il file index.html da mettere alla base dello ZIP
+            const playerHTML = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${gameConfig.titre}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"><\/script>
+    <script src="js/config.js"><\/script>
+    <style>
+        :root { --hfle-blue: #0169B3; --hfle-orange: #EFA92C; --hfle-success: #8dc549; --hfle-error: #d84157; }
+        body { font-family: sans-serif; background-color: #f1f5f9; }
+        /* Il CSS necessario al player */
+    </style>
+</head>
+<body class="p-4 flex justify-center items-center min-h-screen">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[660px] relative">
+        <h1 class="text-center p-4 bg-blue-600 text-white font-bold text-xl">${gameConfig.unite} - ${gameConfig.titre}</h1>
+        <p class="text-center mt-20 text-gray-500">Player HTML da strutturare. I dati risiedono in js/config.js.</p>
+    </div>
+</body>
+</html>`;
+
+            zip.file("index.html", playerHTML);
+
+            // Avvia la generazione asincrona e il salvataggio
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, `Loustics_${gameConfig.titre.replace(/\s+/g, '_')}.zip`);
+            });
         }
     </script>
 </body>
