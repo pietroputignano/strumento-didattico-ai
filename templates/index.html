@@ -15,7 +15,7 @@
         body { font-family: 'Source Sans Pro', sans-serif; background-color: #f1f5f9; }
         .h-titre { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--hfle-blue); text-shadow: rgb(255, 255, 255) 4px 0px 0px, rgb(255, 255, 255) 3.8px 1px 0px; }
         .h-unite-bar { background-color: var(--hfle-blue); color: white; padding: 12px; text-transform: uppercase; font-weight: 700; text-align: center; }
-        .step-pill { width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; }
+        .step-pill { width: 35px; height: 35px; border-radius: 10px; background: #7CB5DD; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .step-pill.active { background-color: var(--hfle-blue); transform: scale(1.1); }
         .step-pill.completed { background-color: var(--hfle-success); }
         
@@ -71,7 +71,7 @@
                     <input id="con-f" type="text" class="w-full p-2 border rounded" value="Écoute e choisis la bonne image.">
                     <select id="type-f" class="type-sel w-full p-2 border rounded bg-white font-bold" onchange="toggleMapperBtn('f')"></select>
                     <div class="flex gap-2">
-                        <button onclick="pickAud('aud-f')" class="flex-1 bg-white border p-2 rounded shadow-sm hover:bg-gray-50">🎵 Audio</button>
+                        <button onclick="pickAud('aud-f')" class="flex-1 bg-white border p-2 rounded shadow-sm hover:bg-gray-50">🎵 Audio Consigne</button>
                         <button id="btn-map-f" onclick="openMapper()" class="flex-1 bg-orange-100 border border-orange-300 p-2 rounded shadow-sm font-bold hidden">🗺️ Mapper</button>
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                     <input id="con-d" type="text" class="w-full p-2 border rounded" value="Remets le mot dans l'ordre.">
                     <select id="type-d" class="type-sel w-full p-2 border rounded bg-white font-bold" onchange="toggleMapperBtn('d')"></select>
                     <div class="flex gap-2">
-                        <button onclick="pickAud('aud-d')" class="flex-1 bg-white border p-2 rounded shadow-sm hover:bg-gray-50">🎵 Audio</button>
+                        <button onclick="pickAud('aud-d')" class="flex-1 bg-white border p-2 rounded shadow-sm hover:bg-gray-50">🎵 Audio Consigne</button>
                         <button id="btn-map-d" onclick="openMapper()" class="flex-1 bg-orange-100 border border-orange-300 p-2 rounded shadow-sm font-bold hidden">🗺️ Mapper</button>
                     </div>
                 </div>
@@ -89,6 +89,15 @@
                 <div>
                     <p class="font-bold uppercase mb-1">Dati / Parole (separati da ;)</p>
                     <textarea id="items-list" class="w-full h-24 p-2 border rounded" placeholder="armoire; couette; fenêtre; lampe"></textarea>
+                    <p class="text-[9px] text-gray-500 italic mt-1">Rebus: usa {item} nel testo. Cruciverba: inserisci una sola parola.</p>
+                </div>
+
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="font-bold text-gray-800 uppercase mb-2">Suoni Feedback</p>
+                    <div class="flex gap-2">
+                        <button onclick="pickAud('global_ok')" class="flex-1 bg-white border p-1 rounded shadow-sm hover:bg-green-50 text-[10px]">🔊 Suono Esatto</button>
+                        <button onclick="pickAud('global_ko')" class="flex-1 bg-white border p-1 rounded shadow-sm hover:bg-red-50 text-[10px]">🔊 Suono Errore</button>
+                    </div>
                 </div>
             </div>
             
@@ -101,13 +110,13 @@
             <div class="px-6 py-4 flex justify-between items-center border-b">
                 <h1 id="res-titre" class="h-titre text-2xl md:text-3xl uppercase">TITRE</h1>
                 <div class="flex gap-2">
-                    <button id="btn-f-view" onclick="switchLvl('f')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white">FACILE</button>
-                    <button id="btn-d-view" onclick="switchLvl('d')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900">DIFFICILE</button>
+                    <button id="btn-f-view" onclick="switchLvl('facile')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white transition">FACILE</button>
+                    <button id="btn-d-view" onclick="switchLvl('difficile')" class="px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900 transition">DIFFICILE</button>
                 </div>
             </div>
 
             <div class="p-8 flex-grow flex flex-col items-center">
-                <div class="flex items-center gap-3 mb-10 bg-slate-50 px-8 py-3 rounded-full border border-slate-200">
+                <div class="flex items-center gap-3 mb-10 bg-slate-50 px-8 py-3 rounded-full border border-slate-200 shadow-sm">
                     <p id="res-consigne" class="italic text-gray-700 font-bold text-lg"></p>
                     <button onclick="playConsigne()" class="text-blue-600 text-2xl hover:scale-125 transition">🔊</button>
                 </div>
@@ -130,14 +139,14 @@
             {id: 'crossword', n: 'Mots Croisés'}
         ];
 
-        let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'f', status = [], activeKey = "";
+        let items = [], dbImg = {}, dbAud = {}, curStep = 0, curLvl = 'facile', status = [], activeKey = "";
         let mappedZones = [];
 
-        // POPOLA MENU A TENDINA
         window.onload = () => {
             document.querySelectorAll('.type-sel').forEach(s => {
                 s.innerHTML = types.map(t=>`<option value="${t.id}">${t.n}</option>`).join('');
             });
+            toggleMapperBtn('f'); toggleMapperBtn('d');
         };
 
         function toggleMapperBtn(l) {
@@ -162,44 +171,61 @@
             const stage = document.getElementById('main-content');
             const pool = document.getElementById('pool');
             const word = items[idx];
-            const type = curLvl === 'f' ? document.getElementById('type-f').value : document.getElementById('type-d').value;
-            document.getElementById('res-consigne').innerText = curLvl === 'f' ? document.getElementById('con-f').value : document.getElementById('con-d').value;
+            const typeId = curLvl === 'facile' ? 'type-f' : 'type-d';
+            const conId = curLvl === 'facile' ? 'con-f' : 'con-d';
+            const type = document.getElementById(typeId).value;
+            
+            document.getElementById('res-consigne').innerText = document.getElementById(conId).value;
 
             if(type === 'dressing') {
-                const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Usa il Visual Mapper</div>`;
+                const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Usa il Visual Mapper per lo sfondo</div>`;
                 const zone = mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
                 const targetHtml = zone ? `<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:${zone.left}; top:${zone.top}; width:${zone.width}; height:${zone.height}"></div>` : '';
                 stage.innerHTML = `<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">${bg}${targetHtml}</div>`;
-                pool.innerHTML = items.map(it => `<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center" data-word="${it}" onclick="pickImg('${it}')">${dbImg[it]?`<img src="${dbImg[it]}" class="max-h-full object-contain">`:`<span class="text-[7px]">📷 ${it}</span>`}</div>`).join('');
+                pool.innerHTML = items.map(it => `<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center" data-word="${it}" onclick="pickImg('${it}')">${dbImg[it]?`<img src="${dbImg[it]}" class="max-h-full object-contain pointer-events-none">`:`<span class="text-[7px]">📷 ${it}</span>`}</div>`).join('');
                 setupSortable('dressing', word);
             }
             else if(type === 'domino') {
                 stage.innerHTML = `<div class="flex items-center gap-6"><div class="domino-tile opacity-40"><div class="tile-img">?</div><div class="tile-text">${word}</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">DROP</div></div>`;
                 pool.innerHTML = items.map((it, i) => {
                     const imgNeeded = i === 0 ? items[items.length-1] : items[i-1];
-                    return `<div class="domino-tile shadow-lg" data-word="${it}"><div class="tile-img" onclick="pickImg('${imgNeeded}')">${dbImg[imgNeeded]?`<img src="${dbImg[imgNeeded]}" class="object-contain w-full h-full">`:`📷 ${imgNeeded}`}</div><div class="tile-text">${it}</div></div>`;
+                    return `<div class="domino-tile shadow-lg" data-word="${it}"><div class="tile-img" onclick="pickImg('${imgNeeded}')">${dbImg[imgNeeded]?`<img src="${dbImg[imgNeeded]}" class="object-contain w-full h-full pointer-events-none">`:`📷 ${imgNeeded}`}</div><div class="tile-text">${it}</div></div>`;
                 }).join('');
                 setupSortable('domino', word);
             }
             else if(type === 'anagramme') {
                 const shuffled = word.split('').sort(()=>Math.random()-0.5);
-                stage.innerHTML = `<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md" onclick="pickImg('${word}')">${dbImg[word]?`<img src="${dbImg[word]}" class="h-full w-full object-contain">`:'📷'}</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>`;
+                stage.innerHTML = `<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md flex justify-center items-center cursor-pointer" onclick="pickImg('${word}')">${dbImg[word]?`<img src="${dbImg[word]}" class="h-full w-full object-contain pointer-events-none">`:'📷 Foto'}</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>`;
                 pool.innerHTML = shuffled.map(l => `<div class="letter-tile" data-letter="${l}">${l.toUpperCase()}</div>`).join('');
                 setupSortable('anagramme', word);
+            }
+            else if(type === 'rebus') {
+                const text = items[idx].replace(/{([^}]+)}/g, `<div id="target" class="rebus-gap overflow-hidden flex items-center justify-center" data-ans="$1"></div>`);
+                stage.innerHTML = `<div class="text-2xl font-bold text-blue-900 leading-loose">${text}</div>`;
+                pool.innerHTML = items.map(it => `<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="${it}">${it}</div>`).join('');
+                setupSortable('rebus', word);
+            }
+            else if(type === 'crossword') {
+                stage.innerHTML = `<div class="grid grid-flow-col gap-1">${word.split('').map(()=>`<input class="cw-cell">`).join('')}</div>`;
+                pool.innerHTML = `<button onclick="validate(true)" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold">Simula Verifica</button>`;
             }
         }
 
         function setupSortable(mode, targetWord) {
             const target = document.getElementById('target');
-            if(!target) return;
-            new Sortable(document.getElementById('pool'), { group: 'game', sort: false });
+            const pool = document.getElementById('pool');
+            if(!target || !pool) return;
+
+            new Sortable(pool, { group: 'game', sort: false });
             new Sortable(target, { 
                 group: 'game', animation: 150,
                 onAdd: (e) => {
                     const dropped = e.item.getAttribute('data-word') || e.item.getAttribute('data-letter');
+                    
                     if(mode === 'dressing' && dropped.toLowerCase() === targetWord.toLowerCase()) {
                         e.item.className = "w-full h-full flex items-center justify-center border-0 bg-transparent shadow-none";
-                        e.item.querySelector('img').className = "w-full h-full object-contain pointer-events-none";
+                        const img = e.item.querySelector('img');
+                        if(img) img.className = "w-full h-full object-contain pointer-events-none";
                         e.target.style.border = "none"; e.target.style.backgroundColor = "transparent";
                         validate(true);
                     } else if(mode === 'anagramme') {
@@ -207,31 +233,54 @@
                         if(current === targetWord) validate(true);
                     } else if(mode === 'domino' && dropped === (items[curStep+1] || items[0])) {
                         validate(true);
+                    } else if(mode === 'rebus') {
+                        e.item.className = "w-full h-full flex items-center justify-center text-sm font-bold bg-transparent border-none shadow-none text-blue-900 m-0 p-0";
+                        e.target.style.border = "none";
+                        validate(true);
                     } else { alert("Riprova!"); e.item.remove(); validate(false); }
                 }
             });
         }
 
         function validate(correct) {
-            if(correct) { confetti(); status[curStep]='completed'; setTimeout(()=>loadStep(curStep<items.length-1?curStep+1:0), 1200); }
-            else status[curStep]='error';
+            if(correct) { 
+                confetti(); status[curStep]='completed'; 
+                if(dbAud['global_ok']) new Audio(dbAud['global_ok']).play();
+                setTimeout(()=>loadStep(curStep<items.length-1?curStep+1:0), 1200); 
+            } else {
+                status[curStep]='error';
+                if(dbAud['global_ko']) new Audio(dbAud['global_ko']).play();
+            }
             renderNav();
         }
 
         function renderNav() { document.getElementById('nav-step').innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${status[i]}" onclick="loadStep(${i})">${i+1}</div>`).join(''); }
-        function switchLvl(l) { curLvl = l; initGame(); }
+        
+        function switchLvl(l) { 
+            curLvl = l; 
+            document.getElementById('btn-f-view').className = l==='facile' ? 'px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md transition' : 'px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900 transition';
+            document.getElementById('btn-d-view').className = l==='difficile' ? 'px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md transition' : 'px-5 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900 transition';
+            initGame(); 
+        }
+        
         function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
         function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
+        
         function handleImg(e) { 
             const r = new FileReader(); r.onload=(ev)=>{ 
                 dbImg[activeKey]=ev.target.result; 
-                if(activeKey==='mapper_bg'){ document.getElementById('mapper-preview').src=ev.target.result; document.getElementById('mapper-preview').classList.remove('hidden'); document.getElementById('mapper-hint').classList.add('hidden'); }
+                if(activeKey==='mapper_bg'){ 
+                    document.getElementById('mapper-preview').src=ev.target.result; 
+                    document.getElementById('mapper-preview').classList.remove('hidden'); 
+                    document.getElementById('mapper-hint').classList.add('hidden'); 
+                }
                 loadStep(curStep); 
             }; r.readAsDataURL(e.target.files[0]); 
         }
+        
         function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio Salvato!");}; r.readAsDataURL(e.target.files[0]); }
         
-        /* --- MAPPER LOGIC --- */
+        /* --- VISUAL MAPPER LOGIC --- */
         function addZone() {
             const z = document.createElement('div'); z.className = 'mapper-zone';
             z.style.cssText = "width:20%; height:20%; left:40%; top:40%;";
@@ -271,33 +320,25 @@
         }
 
         function playConsigne() {
-            const key = curLvl === 'f' ? 'aud-f' : 'aud-d';
+            const key = curLvl === 'facile' ? 'aud-f' : 'aud-d';
             if(dbAud[key]) new Audio(dbAud[key]).play();
-            else { const m=new SpeechSynthesisUtterance(document.getElementById(`con-${curLvl}`).value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
+            else { const m=new SpeechSynthesisUtterance(document.getElementById(curLvl === 'facile' ? 'con-f' : 'con-d').value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
         }
 
-       /* --- MOTORE DI ESPORTAZIONE ZIP (PLAYER STANDALONE) --- */
+        /* --- EXPORT JSZIP (STANDALONE PLAYER) --- */
         async function exportToZIP() {
-            if(items.length === 0) {
-                alert("Attenzione: Inserisci dei dati prima di esportare!");
-                return;
-            }
-
+            if(items.length === 0) { alert("Dati mancanti!"); return; }
             const zip = new JSZip();
-
-            // Costruisci l'albero delle directory
             const assetsFolder = zip.folder("assets");
             const jsFolder = zip.folder("js");
 
-            // Utility per decodificare base64 in File/Blob fisico
-            function dataURLtoBlob(dataurl) {
-                let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+            function dataURLtoBlob(url) {
+                let arr = url.split(','), mime = arr[0].match(/:(.*?);/)[1];
                 let bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
                 while(n--){ u8arr[n] = bstr.charCodeAt(n); }
                 return new Blob([u8arr], {type:mime});
             }
 
-            // 1. Esporta le Immagini in /assets
             let expImg = {};
             for(let k in dbImg) {
                 if(!dbImg[k]) continue;
@@ -307,7 +348,6 @@
                 expImg[k] = `assets/${name}`;
             }
 
-            // 2. Esporta gli Audio in /assets
             let expAud = {};
             for(let k in dbAud) {
                 if(!dbAud[k]) continue;
@@ -317,34 +357,31 @@
                 expAud[k] = `assets/${name}`;
             }
 
-            // 3. Genera il file di Configurazione (Il cervello del player)
-            const gameConfig = {
-                unite: document.getElementById('in-unite').value || "UNITÉ",
-                titre: document.getElementById('in-titre').value || "ACTIVITÉ",
-                items: items,
-                mappedZones: mappedZones,
-                images: expImg,
-                audio: expAud,
-                levels: {
-                    facile: { type: document.getElementById('type-f').value, consigne: document.getElementById('con-f').value },
-                    difficile: { type: document.getElementById('type-d').value, consigne: document.getElementById('con-d').value }
-                }
+            const gameConfig = { 
+                unite: document.getElementById('in-unite').value, 
+                titre: document.getElementById('in-titre').value, 
+                items: items, 
+                mappedZones: mappedZones, 
+                images: expImg, 
+                audio: expAud, 
+                levels: { 
+                    facile: { type: document.getElementById('type-f').value, consigne: document.getElementById('con-f').value }, 
+                    difficile: { type: document.getElementById('type-d').value, consigne: document.getElementById('con-d').value } 
+                } 
             };
             jsFolder.file("config.js", `const GAME_CONFIG = ${JSON.stringify(gameConfig, null, 2)};`);
 
-            // 4. Genera il Player Standalone (index.html per lo studente)
-            const playerHTML = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>bSmart | Jeux interactifs</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"><\/script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"><\/script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="js/config.js"><\/script>
-    <style>
+            // Generazione dell'HTML Standalone usando la concatenazione classica per evitare conflitti con i backticks
+            let playerHTML = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+            playerHTML += '<title>bSmart | ' + gameConfig.titre + '</title>\n';
+            playerHTML += '<script src="https://cdn.tailwindcss.com"></s' + 'cript>\n';
+            playerHTML += '<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></s' + 'cript>\n';
+            playerHTML += '<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></s' + 'cript>\n';
+            playerHTML += '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">\n';
+            playerHTML += '<script src="js/config.js"></s' + 'cript>\n';
+            
+            // CSS Stile Standalone
+            playerHTML += `<style>
         :root { --hfle-blue: #0169B3; --hfle-orange: #EFA92C; --hfle-success: #8dc549; --hfle-error: #d84157; }
         body { font-family: 'Source Sans Pro', sans-serif; background-color: #f1f5f9; }
         .h-titre { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--hfle-blue); text-shadow: rgb(255, 255, 255) 4px 0px 0px, rgb(255, 255, 255) 3.8px 1px 0px; }
@@ -359,9 +396,10 @@
         .drop-target { width: 190px; height: 85px; border: 3px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: bold; }
         .letter-tile { width: 40px; height: 40px; background: var(--hfle-orange); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: grab; }
         .rebus-gap { display: inline-block; width: 60px; height: 40px; border: 2px dashed var(--hfle-blue); border-radius: 8px; vertical-align: middle; margin: 0 5px; background: #f8fafc; }
-    </style>
-</head>
-<body class="p-2 md:p-4 flex justify-center items-center min-h-screen">
+    </style>\n</head>\n`;
+
+            // HTML Body Standalone
+            playerHTML += `<body class="p-2 md:p-4 flex justify-center items-center min-h-screen">
     <div class="w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-[700px] relative">
         <div id="res-unite" class="h-unite-bar"></div>
         <div class="px-6 py-4 flex justify-between items-center border-b">
@@ -380,13 +418,12 @@
             <div id="pool" class="mt-auto p-6 w-full flex flex-wrap justify-center gap-6 border-t border-dashed border-slate-200"></div>
         </div>
         <div id="nav-step" class="p-5 bg-slate-50 border-t flex justify-center gap-3 flex-wrap"></div>
-    </div>
+    </div>\n`;
 
-    <script>
+            // Logica JS Standalone (usa apici singoli/doppi al posto dei backticks per evitare conflitti con la generazione della stringa)
+            playerHTML += `<script>
         let curStep = 0, curLvl = 'facile', status = [];
-        
         window.onload = () => {
-            document.title = "bSmart | " + GAME_CONFIG.titre;
             document.getElementById('res-unite').innerText = GAME_CONFIG.unite;
             document.getElementById('res-titre').innerText = GAME_CONFIG.titre;
             status = new Array(GAME_CONFIG.items.length).fill('pending');
@@ -396,43 +433,46 @@
         function loadStep(idx) {
             if(GAME_CONFIG.items.length === 0) return;
             curStep = idx; renderNav();
-            
             const stage = document.getElementById('main-content');
             const pool = document.getElementById('pool');
             const word = GAME_CONFIG.items[idx];
             const lvlConfig = GAME_CONFIG.levels[curLvl];
-            
             document.getElementById('res-consigne').innerText = lvlConfig.consigne;
 
             if(lvlConfig.type === 'dressing') {
                 const bgSrc = GAME_CONFIG.images['mapper_bg'];
-                const bg = bgSrc ? \`<img src="\${bgSrc}" class="max-h-full">\` : \`<div class="p-10 text-gray-400">Nessuno Sfondo</div>\`;
+                const bg = bgSrc ? '<img src="' + bgSrc + '" class="max-h-full">' : '<div class="p-10 text-gray-400">Nessuno Sfondo</div>';
                 const zone = GAME_CONFIG.mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
-                const targetHtml = zone ? \`<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:\${zone.left}; top:\${zone.top}; width:\${zone.width}; height:\${zone.height}"></div>\` : '';
+                const targetHtml = zone ? '<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:' + zone.left + '; top:' + zone.top + '; width:' + zone.width + '; height:' + zone.height + '"></div>' : '';
+                stage.innerHTML = '<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">' + bg + targetHtml + '</div>';
                 
-                stage.innerHTML = \`<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">\${bg}\${targetHtml}</div>\`;
-                pool.innerHTML = GAME_CONFIG.items.map(it => \`<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center transition-all" data-word="\${it}">\${GAME_CONFIG.images[it]?\`<img src="\${GAME_CONFIG.images[it]}" class="max-h-full object-contain pointer-events-none">\`:\`<span class="text-[7px]">📷 \${it}</span>\`}</div>\`).join('');
+                pool.innerHTML = GAME_CONFIG.items.map(it => {
+                    const imgContent = GAME_CONFIG.images[it] ? '<img src="' + GAME_CONFIG.images[it] + '" class="max-h-full object-contain pointer-events-none">' : '<span class="text-[7px]">📷 ' + it + '</span>';
+                    return '<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center transition-all" data-word="' + it + '">' + imgContent + '</div>';
+                }).join('');
                 setupSortable('dressing', word);
             }
             else if(lvlConfig.type === 'domino') {
-                stage.innerHTML = \`<div class="flex items-center gap-6"><div class="domino-tile opacity-40"><div class="tile-img">?</div><div class="tile-text">\${word}</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">DROP</div></div>\`;
+                stage.innerHTML = '<div class="flex items-center gap-6"><div class="domino-tile opacity-40"><div class="tile-img">?</div><div class="tile-text">' + word + '</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">DROP</div></div>';
                 pool.innerHTML = GAME_CONFIG.items.map((it, i) => {
                     const imgNeeded = i === 0 ? GAME_CONFIG.items[GAME_CONFIG.items.length-1] : GAME_CONFIG.items[i-1];
-                    return \`<div class="domino-tile shadow-lg" data-word="\${it}"><div class="tile-img">\${GAME_CONFIG.images[imgNeeded]?\`<img src="\${GAME_CONFIG.images[imgNeeded]}" class="object-contain w-full h-full">\`:\`📷 \${imgNeeded}\`}</div><div class="tile-text">\${it}</div></div>\`;
+                    const imgContent = GAME_CONFIG.images[imgNeeded] ? '<img src="' + GAME_CONFIG.images[imgNeeded] + '" class="object-contain w-full h-full">' : '📷 ' + imgNeeded;
+                    return '<div class="domino-tile shadow-lg" data-word="' + it + '"><div class="tile-img">' + imgContent + '</div><div class="tile-text">' + it + '</div></div>';
                 }).join('');
                 setupSortable('domino', word);
             }
-            else if(lvlConfig.type === 'rebus') {
-                const text = GAME_CONFIG.items[idx].replace(/{([^}]+)}/g, \`<div id="target" class="rebus-gap overflow-hidden flex items-center justify-center" data-ans="$1"></div>\`);
-                stage.innerHTML = \`<div class="text-2xl font-bold text-blue-900 leading-loose">\${text}</div>\`;
-                pool.innerHTML = GAME_CONFIG.items.map(it => \`<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="\${it}">\${it}</div>\`).join('');
-                setupSortable('rebus', word);
-            }
             else if(lvlConfig.type === 'anagramme') {
                 const shuffled = word.split('').sort(()=>Math.random()-0.5);
-                stage.innerHTML = \`<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md">\${GAME_CONFIG.images[word]?\`<img src="\${GAME_CONFIG.images[word]}" class="h-full w-full object-contain">\`:'📷'}</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>\`;
-                pool.innerHTML = shuffled.map(l => \`<div class="letter-tile" data-letter="\${l}">\${l.toUpperCase()}</div>\`).join('');
+                const imgContent = GAME_CONFIG.images[word] ? '<img src="' + GAME_CONFIG.images[word] + '" class="h-full w-full object-contain">' : '📷';
+                stage.innerHTML = '<div class="flex flex-col items-center gap-6"><div class="w-32 h-32 border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-md">' + imgContent + '</div><div id="target" class="flex gap-1 min-h-[50px] min-w-[240px] border-b-2 border-blue-200 items-end pb-1"></div></div>';
+                pool.innerHTML = shuffled.map(l => '<div class="letter-tile" data-letter="' + l + '">' + l.toUpperCase() + '</div>').join('');
                 setupSortable('anagramme', word);
+            }
+            else if(lvlConfig.type === 'rebus') {
+                const text = GAME_CONFIG.items[idx].replace(/{([^}]+)}/g, '<div id="target" class="rebus-gap overflow-hidden flex items-center justify-center" data-ans="$1"></div>');
+                stage.innerHTML = '<div class="text-2xl font-bold text-blue-900 leading-loose">' + text + '</div>';
+                pool.innerHTML = GAME_CONFIG.items.map(it => '<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="' + it + '">' + it + '</div>').join('');
+                setupSortable('rebus', word);
             }
         }
 
@@ -440,31 +480,26 @@
             const pool = document.getElementById('pool');
             const target = document.getElementById('target');
             if(!target || !pool) return;
-
             new Sortable(pool, { group: 'game', sort: false, animation: 150 });
             new Sortable(target, { 
                 group: 'game', animation: 150,
                 onAdd: (e) => {
                     const dropped = e.item.getAttribute('data-word') || e.item.getAttribute('data-letter');
-                    
                     if(mode === 'dressing') {
                         if(dropped.toLowerCase() === targetWord.toLowerCase()) {
                             e.item.className = "w-full h-full flex items-center justify-center p-0 m-0 border-0 bg-transparent shadow-none";
-                            const img = e.item.querySelector('img');
-                            if(img) img.className = "w-full h-full object-contain pointer-events-none";
+                            const img = e.item.querySelector('img'); if(img) img.className = "w-full h-full object-contain pointer-events-none";
                             e.target.style.border = "none"; e.target.style.backgroundColor = "transparent";
                             validate(true);
                         } else { e.item.remove(); validate(false); }
                     }
                     else if(mode === 'domino') {
                         const nextItem = GAME_CONFIG.items[curStep + 1] || GAME_CONFIG.items[0];
-                        if(dropped === nextItem) validate(true);
-                        else { e.item.remove(); validate(false); }
+                        if(dropped === nextItem) validate(true); else { e.item.remove(); validate(false); }
                     }
                     else if(mode === 'rebus') {
                         e.item.className = "w-full h-full flex items-center justify-center text-sm font-bold bg-transparent border-none shadow-none text-blue-900 m-0 p-0";
-                        e.target.style.border = "none";
-                        validate(true);
+                        e.target.style.border = "none"; validate(true);
                     }
                     else if(mode === 'anagramme') {
                         const current = Array.from(target.children).map(el=>el.getAttribute('data-letter')).join('');
@@ -479,36 +514,30 @@
                 confetti(); status[curStep]='completed'; 
                 if(GAME_CONFIG.audio['global_ok']) new Audio(GAME_CONFIG.audio['global_ok']).play();
                 setTimeout(()=>loadStep(curStep < GAME_CONFIG.items.length-1 ? curStep+1 : 0), 1500); 
-            }
-            else {
+            } else {
                 status[curStep]='error';
                 if(GAME_CONFIG.audio['global_ko']) new Audio(GAME_CONFIG.audio['global_ko']).play();
             }
             renderNav();
         }
 
-        function renderNav() { document.getElementById('nav-step').innerHTML = GAME_CONFIG.items.map((_, i) => \`<div class="step-pill \${i===curStep?'active':''} \${status[i]}" onclick="loadStep(\${i})">\${i+1}</div>\`).join(''); }
-
+        function renderNav() { document.getElementById('nav-step').innerHTML = GAME_CONFIG.items.map((_, i) => '<div class="step-pill ' + (i===curStep?'active ':'') + status[i] + '" onclick="loadStep(' + i + ')">' + (i+1) + '</div>').join(''); }
         function switchLvl(l) { 
             curLvl = l; 
             document.getElementById('btn-f-view').className = l==='facile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 text-blue-900';
             document.getElementById('btn-d-view').className = l==='difficile' ? 'px-4 py-1 rounded-full text-xs font-black border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 text-blue-900';
             loadStep(0);
         }
-
         function playConsigne() {
             const key = curLvl === 'facile' ? 'aud-f' : 'aud-d';
             if(GAME_CONFIG.audio[key]) { new Audio(GAME_CONFIG.audio[key]).play(); } 
             else { const m = new SpeechSynthesisUtterance(GAME_CONFIG.levels[curLvl].consigne); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
         }
-    <\/script>
-</body>
-</html>`;
+    </s` + `cript>\n</body>\n</html>`;
 
             zip.file("index.html", playerHTML);
-
-            // 5. Genera lo ZIP e attiva il Download
-            zip.generateAsync({type:"blob"}).then(function(content) {
-                saveAs(content, `bSmart_${gameConfig.titre.replace(/\s+/g, '_')}.zip`);
-            });
+            zip.generateAsync({type:"blob"}).then(c => saveAs(c, `bSmart_${gameConfig.titre.replace(/\s+/g, '_')}.zip`));
         }
+    </script>
+</body>
+</html>
