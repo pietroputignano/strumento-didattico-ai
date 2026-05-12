@@ -164,66 +164,118 @@
             if(type === 'dressing') {
                 const bg = dbImg['mapper_bg'] ? `<img src="${dbImg['mapper_bg']}" class="max-h-full">` : `<div class="p-10 text-gray-400">Carica Sfondo nel Mapper</div>`;
                 const zone = mappedZones.find(z => z.word.toLowerCase() === word.toLowerCase());
-                const targetHtml = zone ? `<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg" style="left:${zone.left}; top:${zone.top}; width:${zone.width}; height:${zone.height}"></div>` : '';
+                // Rimosso il bg visibile se non necessario, ma utile per il debug
+                const targetHtml = zone ? `<div id="target" class="absolute border-2 border-dashed border-blue-500 bg-blue-100/30 rounded-lg flex items-center justify-center transition-all duration-300" style="left:${zone.left}; top:${zone.top}; width:${zone.width}; height:${zone.height}"></div>` : '';
                 
                 stage.innerHTML = `<div class="relative w-[400px] h-[400px] bg-slate-50 border-4 border-white shadow-xl rounded-2xl flex items-center justify-center overflow-hidden">${bg}${targetHtml}</div>`;
-                pool.innerHTML = items.map(it => `<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center" data-word="${it}" onclick="pickImg('${it}')">${dbImg[it]?`<img src="${dbImg[it]}" class="max-h-full">`:`<span class="text-[7px]">📷 ${it}</span>`}</div>`).join('');
+                pool.innerHTML = items.map(it => `<div class="w-20 h-20 bg-white border-2 border-blue-200 rounded-lg shadow-md cursor-grab p-1 flex items-center justify-center transition-all" data-word="${it}" onclick="pickImg('${it}')">${dbImg[it]?`<img src="${dbImg[it]}" class="max-h-full object-contain pointer-events-none">`:`<span class="text-[7px]">📷 ${it}</span>`}</div>`).join('');
                 setupSortable('dressing', word);
             }
             else if(type === 'domino') {
                 stage.innerHTML = `<div class="flex items-center gap-6"><div class="domino-tile opacity-40"><div class="tile-img">?</div><div class="tile-text">${word}</div></div><div class="text-3xl text-blue-300">➜</div><div id="target" class="drop-target">DROP</div></div>`;
                 pool.innerHTML = items.map((it, i) => {
                     const imgNeeded = i === 0 ? items[items.length-1] : items[i-1];
-                    return `<div class="domino-tile shadow-lg" data-word="${it}"><div class="tile-img" onclick="pickImg('${imgNeeded}')">${dbImg[imgNeeded]?`<img src="${dbImg[imgNeeded]}">`:`📷 ${imgNeeded}`}</div><div class="tile-text">${it}</div></div>`;
+                    return `<div class="domino-tile shadow-lg" data-word="${it}"><div class="tile-img" onclick="pickImg('${imgNeeded}')">${dbImg[imgNeeded]?`<img src="${dbImg[imgNeeded]}" class="object-contain w-full h-full">`:`📷 ${imgNeeded}`}</div><div class="tile-text">${it}</div></div>`;
                 }).join('');
                 setupSortable('domino', word);
             }
             else if(type === 'rebus') {
-                const text = items[idx].replace(/{([^}]+)}/g, `<div id="target" class="rebus-gap" data-ans="$1"></div>`);
+                const text = items[idx].replace(/{([^}]+)}/g, `<div id="target" class="rebus-gap overflow-hidden flex items-center justify-center" data-ans="$1"></div>`);
                 stage.innerHTML = `<div class="text-2xl font-bold text-blue-900 leading-loose">${text}</div>`;
-                pool.innerHTML = items.map(it => `<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold" data-word="${it}">${it}</div>`).join('');
+                pool.innerHTML = items.map(it => `<div class="px-4 py-2 bg-white border-2 border-blue-400 rounded-full shadow-sm cursor-grab font-bold text-sm flex items-center justify-center" data-word="${it}">${it}</div>`).join('');
                 setupSortable('rebus', word);
             }
-            // ... Altri tipi caricati via Sortable
+            // ... (altre tipologie)
         }
 
         function setupSortable(mode, targetWord) {
-            new Sortable(pool, { group: 'game', sort: false });
-            new Sortable(document.getElementById('target'), {
-                group: 'game', onAdd: (e) => {
-                    const dropped = e.item.getAttribute('data-word');
-                    if(mode === 'dressing' && dropped === targetWord) validate(true);
-                    else if(mode === 'domino' && dropped === (items[curStep+1] || items[0])) validate(true);
-                    else if(mode === 'rebus') validate(true); // Logica semplificata
-                    else { alert("Riprova!"); e.item.remove(); }
+            const pool = document.getElementById('pool');
+            const target = document.getElementById('target');
+            if(!target || !pool) return;
+
+            new Sortable(pool, { group: 'game', sort: false, animation: 150 });
+            new Sortable(target, { 
+                group: 'game', 
+                animation: 150,
+                onAdd: (e) => {
+                    const dropped = e.item.getAttribute('data-word') || e.item.getAttribute('data-letter');
+                    
+                    if(mode === 'dressing') {
+                        if(dropped.toLowerCase() === targetWord.toLowerCase()) {
+                            // ADATTAMENTO AL 100% DELL'AREA:
+                            e.item.className = "w-full h-full flex items-center justify-center p-0 m-0 border-0 bg-transparent shadow-none";
+                            
+                            // Adatta l'immagine interna
+                            const img = e.item.querySelector('img');
+                            if(img) img.className = "w-full h-full object-contain pointer-events-none";
+
+                            // Nascondi i tratteggi del target
+                            e.target.style.border = "none";
+                            e.target.style.backgroundColor = "transparent";
+
+                            validate(true);
+                        } else { alert("Riprova!"); e.item.remove(); validate(false); }
+                    }
+                    else if(mode === 'domino') {
+                        const nextItem = items[curStep + 1] || items[0];
+                        if(dropped === nextItem) validate(true);
+                        else { alert("Riprova!"); e.item.remove(); validate(false); }
+                    }
+                    else if(mode === 'rebus') {
+                        // Semplificazione validazione rebus
+                        e.item.className = "w-full h-full flex items-center justify-center text-sm font-bold bg-transparent border-none shadow-none text-blue-900 m-0 p-0";
+                        e.target.style.border = "none";
+                        validate(true);
+                    }
                 }
             });
         }
 
         function validate(correct) {
-            if(correct) { confetti(); status[curStep]='completed'; setTimeout(()=>loadStep(curStep<items.length-1?curStep+1:0), 1500); }
-            else status[curStep]='error';
+            if(correct) { 
+                confetti(); status[curStep]='completed'; 
+                if(dbAud['global_ok']) new Audio(dbAud['global_ok']).play();
+                setTimeout(()=>loadStep(curStep < items.length-1 ? curStep+1 : 0), 1500); 
+            }
+            else {
+                status[curStep]='error';
+                if(dbAud['global_ko']) new Audio(dbAud['global_ko']).play();
+            }
             renderNav();
         }
 
         function renderNav() { document.getElementById('nav-step').innerHTML = items.map((_, i) => `<div class="step-pill ${i===curStep?'active':''} ${status[i]}" onclick="loadStep(${i})">${i+1}</div>`).join(''); }
-        function switchLvl(l) { curLvl = l; initGame(); }
+
+        function switchLvl(l) { 
+            curLvl = l; 
+            document.getElementById('btn-f-view').className = l==='f' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 text-blue-900';
+            document.getElementById('btn-d-view').className = l==='d' ? 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 bg-blue-900 text-white shadow-md' : 'px-4 py-1 rounded-full text-xs font-bold border-2 border-blue-900 text-blue-900';
+            initGame();
+        }
+
         function pickImg(k) { activeKey = k; document.getElementById('imgInp').click(); }
         function pickAud(k) { activeKey = k; document.getElementById('audInp').click(); }
+        
         function handleImg(e) { 
             const r = new FileReader(); r.onload=(ev)=>{ 
                 dbImg[activeKey]=ev.target.result; 
-                if(activeKey==='mapper_bg'){ document.getElementById('mapper-preview').src=ev.target.result; document.getElementById('mapper-preview').classList.remove('hidden'); document.getElementById('mapper-hint').classList.add('hidden'); }
+                if(activeKey==='mapper_bg'){ 
+                    document.getElementById('mapper-preview').src=ev.target.result; 
+                    document.getElementById('mapper-preview').classList.remove('hidden'); 
+                    document.getElementById('mapper-hint').classList.add('hidden'); 
+                }
                 loadStep(curStep); 
             }; r.readAsDataURL(e.target.files[0]); 
         }
-        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio Salvato!");}; r.readAsDataURL(e.target.files[0]); }
         
+        function handleAud(e) { const r = new FileReader(); r.onload=(ev)=>{dbAud[activeKey]=ev.target.result; alert("Audio MP3 salvato in memoria!");}; r.readAsDataURL(e.target.files[0]); }
+        
+        /* --- VISUAL MAPPER LOGIC --- */
         function addZone() {
             const z = document.createElement('div'); z.className = 'mapper-zone';
             z.style.cssText = "width:20%; height:20%; left:40%; top:40%;";
             const word = items[mappedZones.length] || "item";
-            z.innerHTML = `<input class="w-16 text-[8px] font-bold text-center border-none" value="${word}" onchange="this.parentElement.dataset.word=this.value"><div class="resize-handle"></div>`;
+            z.innerHTML = `<input class="w-16 text-[8px] font-bold text-center border-none bg-white/80" value="${word}" onchange="this.parentElement.dataset.word=this.value"><div class="resize-handle"></div>`;
             z.dataset.word = word;
             document.getElementById('mapper-container').appendChild(z);
             makeDraggable(z);
@@ -259,8 +311,13 @@
 
         function playConsigne() {
             const key = curLvl === 'f' ? 'aud-f' : 'aud-d';
-            if(dbAud[key]) new Audio(dbAud[key]).play();
-            else { const m=new SpeechSynthesisUtterance(document.getElementById(`con-${curLvl}`).value); m.lang='fr-FR'; window.speechSynthesis.speak(m); }
+            if(dbAud[key]) {
+                const a = new Audio(dbAud[key]);
+                a.play().catch(e => console.error(e));
+            } else { 
+                const m = new SpeechSynthesisUtterance(document.getElementById(`con-${curLvl}`).value); 
+                m.lang='fr-FR'; window.speechSynthesis.speak(m); 
+            }
         }
     </script>
 </body>
